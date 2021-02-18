@@ -5,6 +5,20 @@ Shader "TeeNik/RaymarchingShader"
         _MainTex ("Texture", 2D) = "white" {}
 		_Accuracy("Accuracy", Range(0.001, 0.1)) = 0.01
 		_MaxIterations("MaxIterations", Range(0, 300)) = 64
+		_RandomBorder("RandomBorder", Range(0.0, 1.0)) = .99
+
+		_LightColor("LightColor", Color) = (1,1,1,1)
+		_LightIntensity("LightIntensity", float) = 1.0
+
+		_ShadowDistance("ShadowDistance", Vector) = (0,0,0)
+		_ShadowIntensity("ShadowIntensity", float) = 1.0
+		_ShadowPenumbra("ShadowPenumbra", float) = 1.0
+
+		_AOStepsize("AOStepsize", float) = 1.0
+		_AOIterations("AOIterations", float) = 1.0
+		_AOIntensity("AOIntensity", float) = 1.0
+
+			
     }
     SubShader
     {
@@ -25,6 +39,7 @@ Shader "TeeNik/RaymarchingShader"
 
 			float _Accuracy;
 			int _MaxIterations;
+			float _RandomBorder;
 
 			uniform sampler2D _CameraDepthTexture;
 			uniform float4x4 _CamFrustum;
@@ -33,12 +48,23 @@ Shader "TeeNik/RaymarchingShader"
 
 			uniform float4 _Sphere;
 			uniform float4 _Box;
+			uniform float4 _Torus;
+			uniform float4x4 _RotationMat;
 
-			uniform float3 _LightDir;
 			uniform fixed4 _MainColor;
 			uniform float3 _ModInterval;
 
-			uniform float4x4 _RotationMat;
+			uniform float3 _LightDir;
+			uniform fixed4 _LightColor;
+			uniform float _LightIntensity;
+
+			uniform float3 _ShadowDistance;
+			uniform float _ShadowIntensity;
+			uniform float _ShadowPenumbra;
+
+			uniform float _AOStepsize;
+			uniform float _AOIterations;
+			uniform float _AOIntensity;
 
             struct appdata
             {
@@ -70,10 +96,18 @@ Shader "TeeNik/RaymarchingShader"
 
 			float boxSphere(float3 pos)
 			{
-				float sphere = sdSphere(pos - _Sphere.xyz, _Sphere.w);
-				float box = sdRoundBox(pos - _Box.xyz, _Box.www, 0.5);
+				//float3 boxPoint = mul(_RotationMat, float4(pos - _Box.xyz, 1)).xyz;
+				float3 boxPoint = pos - _Box.xyz;
+				float sphere = sdSphere(boxPoint, _Sphere.w);
+				float box = sdRoundBox(boxPoint, _Box.www, 0.5);
 				float result = opSmoothSubtraction(sphere, box, 0.5);
 				return result;
+			}
+
+			float random(float3 st) {
+				return frac(sin(dot(st.xyz,
+					float3(12.9898, 78.233, 51.489))) *
+					43758.5453123);
 			}
 
 			float map(float3 pos)
@@ -84,13 +118,13 @@ Shader "TeeNik/RaymarchingShader"
 				//	float modY = pMod1(pos.y, _ModInterval.y);
 				//	float modZ = pMod1(pos.z, _ModInterval.z);
 				//}
-				//float3 boxPoint = mul(_RotationMat, float4(pos - _Box.xyz, 1)).xyz;
-				//float torus = sdTorus(pos - _Sphere.xyz, float2(1, .5));
+				float torus = sdTorus(pos - _Torus.xyz, float2(_Torus.w, 0.4));
 
 				float ground = sdPlane(pos, float4(0, 1, 0, 0));
 				float bs = boxSphere(pos);
+				float bt = opSmoothUnion(bs, torus, 0.5);
 				
-				return opU(ground, bs);
+				return opU(ground, bt);
 
 			}
 
@@ -104,11 +138,64 @@ Shader "TeeNik/RaymarchingShader"
 				return normalize(normal);
 			}
 
+			float hardShadow(float3 ro, float3 rd, float mint, float maxt)
+			{
+				for (float t = mint; t < maxt;)
+				{
+					float h = map(ro + rd * t);
+					if (h < 0.001)
+					{
+						return 0.0;
+					}
+					t += h;
+				}
+				return 1.0;
+			}
+
+			float softShadow(float3 ro, float3 rd, float mint, float maxt, float k)
+			{
+				float result = 1.0;
+				for (float t = mint; t < maxt;)
+				{
+					float h = map(ro + rd * t);
+					if (h < 0.001)
+					{
+						return 0.0;
+					}
+					result = min(result, k * h / t);
+					t += h;
+				}
+				return result;
+			}
+
+			float ambientOcclusion(float3 pos, float3 normal)
+			{
+				float step = _AOStepsize;
+				float ao = 0.0;
+				float dist;
+				for (int i = 1; i <= _AOIterations; ++i)
+				{
+					dist = step * i;
+					ao += max(0.0, (dist - map(pos + normal * dist)) / dist);
+				}
+				return 1 - ao * _AOIntensity;
+			}
+
 			float3 getShading(float3 pos, float3 normal)
 			{
+				float3 result;
+				//diffuse color
+				float3 color = _MainColor.rgb;
 				//directional light
-				float light = dot(_WorldSpaceLightPos0, normal);
-				return light;
+				float3 light = (_LightColor * dot(_WorldSpaceLightPos0, normal) * 0.5 + 0.5) * _LightIntensity;
+				//shadow
+				float shadow = softShadow(pos, _WorldSpaceLightPos0, _ShadowDistance.x, _ShadowDistance.y, _ShadowPenumbra) * 0.5 + 0.5;
+				shadow = max(0.0, pow(shadow, _ShadowIntensity));
+				//ambient occlusion
+				float ao = ambientOcclusion(pos, normal);
+
+				result = color * light * shadow * ao;
+				return result;
 			}
 
 			fixed4 raymarching(float3 ro, float3 rd, float depth)
@@ -122,6 +209,7 @@ Shader "TeeNik/RaymarchingShader"
 					{
 						//environment
 						result = fixed4(rd, 0);
+						//result = fixed4(0,0,0,1);
 						break;
 					}
 
@@ -133,7 +221,13 @@ Shader "TeeNik/RaymarchingShader"
 						float3 normal = getNormal(pos);
 						float3 shading = getShading(pos, normal);
 
-						result = fixed4(_MainColor.rgb * shading, 1);
+						//float3 randColor = float3(0, 0, 0);
+						//if (random(pos) > _RandomBorder)
+						//{
+						//	randColor = float3(1, 1, 1);
+						//}
+
+						result = fixed4(shading, 1);
 						break;
 					}
 

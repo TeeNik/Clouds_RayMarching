@@ -42,6 +42,8 @@ public class RaymarchingCamera : SceneViewFilter
 
     public Transform Sphere;
     public Transform Box;
+    public Transform Torus;
+
     public Transform DirectionalLight;
     public Color MainColor;
     public Vector3 ModInterval;
@@ -57,15 +59,18 @@ public class RaymarchingCamera : SceneViewFilter
         RaymarchingMaterial.SetMatrix("_CamFrustum", CamFrustum(Camera));
         RaymarchingMaterial.SetMatrix("_CamToWorld", Camera.cameraToWorldMatrix);
         RaymarchingMaterial.SetFloat("_MaxDistance", MaxDistance);
+
         RaymarchingMaterial.SetVector("_Sphere", Sphere ? new Vector4(Sphere.position.x, Sphere.position.y, Sphere.position.z, Sphere.localScale.x) : Vector4.one);
         RaymarchingMaterial.SetVector("_Box", Box ? new Vector4(Box.position.x, Box.position.y, Box.position.z, Box.localScale.x) : Vector4.one);
+        RaymarchingMaterial.SetVector("_Torus", Torus ? new Vector4(Torus.position.x, Torus.position.y, Torus.position.z, Torus.localScale.x) : Vector4.one);
+
         RaymarchingMaterial.SetVector("_LightDir", DirectionalLight ? DirectionalLight.forward : Vector3.down);
         RaymarchingMaterial.SetColor("_MainColor", MainColor);
         RaymarchingMaterial.SetVector("_ModInterval", ModInterval);
 
         Matrix4x4 rotMatrix = Matrix4x4.TRS(
             Vector3.one,
-            Quaternion.Euler(new Vector3(0, 0, (Time.time * 200) % 360)), 
+            Quaternion.Euler(new Vector3(0, (Time.time * 100) % 360, (Time.time * 100) % 360)), 
             Vector3.one
             );
 
