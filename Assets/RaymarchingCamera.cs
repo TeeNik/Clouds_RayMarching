@@ -60,7 +60,7 @@ public class RaymarchingCamera : SceneViewFilter
         RaymarchingMaterial.SetMatrix("_CamToWorld", Camera.cameraToWorldMatrix);
         RaymarchingMaterial.SetFloat("_MaxDistance", MaxDistance);
 
-        RaymarchingMaterial.SetVector("_Sphere", Sphere ? new Vector4(Sphere.position.x, Sphere.position.y, Sphere.position.z, Sphere.localScale.x) : Vector4.one);
+        RaymarchingMaterial.SetVector("_Sphere", Sphere ? new Vector4(Sphere.localPosition.x, Sphere.localPosition.y, Sphere.localPosition.z, Sphere.localScale.x) : Vector4.one);
         RaymarchingMaterial.SetVector("_Box", Box ? new Vector4(Box.position.x, Box.position.y, Box.position.z, Box.localScale.x) : Vector4.one);
         RaymarchingMaterial.SetVector("_Torus", Torus ? new Vector4(Torus.position.x, Torus.position.y, Torus.position.z, Torus.localScale.x) : Vector4.one);
 

@@ -33,7 +33,7 @@ Shader "TeeNik/RaymarchingShader"
 			#pragma target 3.0
 
             #include "UnityCG.cginc"
-			#include "DistanceFunctions.cginc"
+			#include "../DistanceFunctions.cginc"
 
 			sampler2D _MainTex;
 
@@ -98,7 +98,7 @@ Shader "TeeNik/RaymarchingShader"
 			{
 				//float3 boxPoint = mul(_RotationMat, float4(pos - _Box.xyz, 1)).xyz;
 				float3 boxPoint = pos - _Box.xyz;
-				float sphere = sdSphere(boxPoint, _Sphere.w);
+				float sphere = sdSphere(boxPoint - _Sphere.xyz, _Sphere.w);
 				float box = sdRoundBox(boxPoint, _Box.www, 0.5);
 				float result = opSmoothSubtraction(sphere, box, 0.5);
 				return result;
