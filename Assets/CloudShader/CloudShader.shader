@@ -176,18 +176,6 @@ Shader "TeeNik/CloudShader"
 				return a;
 			}
 
-			float BeerLambert(float absorptionCoefficient, float distanceTraveled)
-			{
-				return exp(-absorptionCoefficient * distanceTraveled);
-			}
-
-			float3 render(in float3 ro, in float3 rd, float depth)
-			{
-				float3 opaqueColor = float3(0,0,0);
-
-
-			}
-
 			float map(float3 pos)
 			{
 				//float iTime = 0;
@@ -196,14 +184,11 @@ Shader "TeeNik/CloudShader"
 				float sdfValue = sdSphere(pos, float3(-8.0, 2.0 + 20.0 * sin(iTime), -1), 5.6);
 				sdfValue = sdSmoothUnion(sdfValue, sdSphere(pos, float3(8.0, 8.0 + 12.0 * cos(iTime), 3), 5.6), 3.0f);
 				sdfValue = sdSmoothUnion(sdfValue, sdSphere(pos, float3(5.0 * sin(iTime), 3.0, 0), 8.0), 3.0) + 7.0 * fbm_4(fbmCoord / 3.2);
-				sdfValue = sdSmoothUnion(sdfValue, sdPlane(pos + float3(0, 0.4, 0)), 22.0);
-				
+				//sdfValue = sdSmoothUnion(sdfValue, sdPlane(pos + float3(0, 0.4, 0)), 22.0);
+
 				//float sdfValue = sdSphere(pos, float3(5.0 * sin(iTime), 3.0, 0), 8.0) + 7.0 * fbm_4(fbmCoord / 3.2);
-
-
 				//float sphere = sdSphere(pos - _Sphere.xyz, _Sphere.w);
 				return sdfValue;
-
 			}
 
 			float3 getNormal(float3 pos)
@@ -276,6 +261,49 @@ Shader "TeeNik/CloudShader"
 				return result;
 			}
 
+			float BeerLambert(float absorptionCoefficient, float distanceTraveled)
+			{
+				return exp(-absorptionCoefficient * distanceTraveled);
+			}
+
+			float GetLightAttenuation(float distanceToLight)
+			{
+				return 1.0 / pow(distanceToLight, 1.65);
+			}
+
+			float4 getShading1(float3 ro, float3 rd, float depth)
+			{
+				float volumeDepth = 0.0f;
+				float opaqueVisibility = 1.0f;
+				const float marchSize = 0.6f;
+				float3 volumetricColor;
+
+				for (int i = 0; i < _MaxIterations; ++i)
+				{
+					volumeDepth += marchSize;
+					if (volumeDepth > _MaxDistance) {
+						break;
+					}
+
+					float3 pos = ro + volumeDepth * rd;
+					bool isInVolume = map(pos) < 0.0;
+					if (isInVolume)
+					{
+						//opaqueVisibility -= 0.01;
+						//opaqueVisibility = max(0, opaqueVisibility);
+
+						float previousOpaqueVisibility = opaqueVisibility;
+						opaqueVisibility *= BeerLambert(0.15, marchSize);
+						float absorptionFromMarch = previousOpaqueVisibility - opaqueVisibility;
+
+						//float lightDistance = _WorldSpaceLightPos0 - pos;
+						//float3 lightColor = _LightColor * GetLightAttenuation(lightDistance);
+						volumetricColor += absorptionFromMarch * _LightColor;
+					}
+				}
+				return float4(volumetricColor, 1 - opaqueVisibility);
+			}
+
 			fixed4 raymarching(float3 ro, float3 rd, float depth)
 			{
 				fixed4 result = fixed4(1, 1, 1, 1);
@@ -300,15 +328,12 @@ Shader "TeeNik/CloudShader"
 					{
 
 						float3 normal = getNormal(pos);
-						float3 shading = getShading(pos, normal);
+						//float3 shading = getShading(pos, normal);
+						//result = fixed4(shading, 1);
 
-						//float3 randColor = float3(0, 0, 0);
-						//if (random(pos) > _RandomBorder)
-						//{
-						//	randColor = float3(1, 1, 1);
-						//}
+						float4 shading = getShading1(ro, rd, depth);
+						result = fixed4(shading.xyz, shading.w);
 
-						result = fixed4(shading, 1);
 						break;
 					}
 
