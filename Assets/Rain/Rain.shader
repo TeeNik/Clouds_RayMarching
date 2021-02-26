@@ -6,6 +6,7 @@ Shader "Unlit/Rain"
 		_Size("Size", float) = 1
 		_T("Time", float) = 1
 		_Distortion("Distortion", range(-5, 5)) = 1
+		_Blur("Blur", range(0, 1)) = 1
 	}
     SubShader
     {
@@ -38,7 +39,7 @@ Shader "Unlit/Rain"
             sampler2D _MainTex;
             float4 _MainTex_ST;
 
-			float _Size, _T, _Distortion;
+			float _Size, _T, _Distortion, _Blur;
 
             v2f vert (appdata v)
             {
@@ -58,7 +59,7 @@ Shader "Unlit/Rain"
 
 			fixed4 frag(v2f i) : SV_Target
 			{
-				float t = fmod(_Time.y * 1 + _T, 7200);
+				float t = fmod(_Time.y * 0 + _T, 7200);
 				float4 col = 0;
 
 				float2 aspect = float2(2, 1);
@@ -85,7 +86,7 @@ Shader "Unlit/Rain"
 				trailPos.y = (frac(trailPos.y * 8) - 0.5) / 8;
 				float trail = smoothstep(.03, .01, length(trailPos));
 				float fogTrail = smoothstep(-0.05, 0.05, dropPos.y);
-				fogTrail *= smoothstep(0.5, y, gv.y); //??
+				fogTrail *= smoothstep(0.5, y, gv.y);
 				fogTrail *= smoothstep(.05, .04, abs(dropPos.x));
 
 				trail *= fogTrail;
@@ -99,8 +100,11 @@ Shader "Unlit/Rain"
 				//debug grid
 				//if (gv.x > .48 || gv.y > .49) col = float4(1, 0, 0, 1);
 
-				col = tex2D(_MainTex, i.uv + offset * _Distortion);
+				float blur = _Blur * 7 * (1.0 - fogTrail);
+				col = tex2Dlod(_MainTex, float4(i.uv + offset * _Distortion, 0, blur));
 				col *= 0.5;
+
+				col *= 0; col.rg = drop * dropPos * 10;
 
                 return col;
             }
