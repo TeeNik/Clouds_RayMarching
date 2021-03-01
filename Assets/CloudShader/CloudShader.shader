@@ -18,7 +18,8 @@ Shader "TeeNik/CloudShader"
 		_AOIterations("AOIterations", float) = 1.0
 		_AOIntensity("AOIntensity", float) = 1.0
 
-			
+		_AbsorptionCoefficient("AbsorptionCoefficient", float) = 0.25
+		_LightAttenuation("LightAttenuation", float) = 1.0
     }
     SubShader
     {
@@ -45,6 +46,8 @@ Shader "TeeNik/CloudShader"
 			uniform float4x4 _CamToWorld;
 			uniform float _MaxDistance;
 
+			uniform float3 _LightPos;
+
 			uniform float4 _Sphere;
 			uniform float4 _Box;
 			uniform float4 _Torus;
@@ -64,6 +67,10 @@ Shader "TeeNik/CloudShader"
 			uniform float _AOStepsize;
 			uniform float _AOIterations;
 			uniform float _AOIntensity;
+
+			uniform float _AbsorptionCoefficient;
+			uniform float _LightAttenuation;
+
 
             struct appdata
             {
@@ -178,8 +185,7 @@ Shader "TeeNik/CloudShader"
 
 			float map(float3 pos)
 			{
-				//float iTime = 0;
-				float iTime = _Time.y;
+				float iTime = _Time.y * 1;
 				float3 fbmCoord = (pos + 2.0 * float3(iTime, 0, iTime)) / 1.5;
 				float sdfValue = sdSphere(pos, float3(-8.0, 2.0 + 20.0 * sin(iTime), -1), 5.6);
 				sdfValue = sdSmoothUnion(sdfValue, sdSphere(pos, float3(8.0, 8.0 + 12.0 * cos(iTime), 3), 5.6), 3.0f);
@@ -268,7 +274,35 @@ Shader "TeeNik/CloudShader"
 
 			float GetLightAttenuation(float distanceToLight)
 			{
-				return 1.0 / pow(distanceToLight, 1.65);
+				return 1.0 / pow(distanceToLight, _LightAttenuation);
+			}
+
+			float GetFogDensity(float3 position, float sdfDistance)
+			{
+				const float maxSDFMultiplier = 1.0;
+				bool insideSDF = sdfDistance < 0.0;
+				float sdfMultiplier = insideSDF ? min(abs(sdfDistance), maxSDFMultiplier) : 0.0;
+				return sdfMultiplier;
+				//return sdfMultiplier * abs(fbm_4(position / 6.0) + 0.5);
+			}
+
+			float GetLightVisiblity(in float3 rayOrigin, in float3 rayDirection, in float maxT, in int maxSteps, float marchSize) {
+				float t = 0.0f;
+				float lightVisiblity = 1.0f;
+				float signedDistance = 0.0;
+				for (int i = 0; i < maxSteps; i++) {
+					t += marchSize;
+					if (t > maxT) break;
+
+					float3 position = rayOrigin + t * rayDirection;
+					signedDistance = map(position);
+					if (signedDistance < 0.0) {
+						float coeff = 0.1;
+						coeff *= GetFogDensity(position, signedDistance);
+						lightVisiblity *= BeerLambert(coeff, marchSize);
+					}
+				}
+				return lightVisiblity;
 			}
 
 			float4 getShading1(float3 ro, float3 rd, float depth)
@@ -276,29 +310,42 @@ Shader "TeeNik/CloudShader"
 				float volumeDepth = 0.0f;
 				float opaqueVisibility = 1.0f;
 				const float marchSize = 0.6f;
-				float3 volumetricColor;
+				float3 volumetricColor = 0.0;
 
 				for (int i = 0; i < _MaxIterations; ++i)
 				{
 					volumeDepth += marchSize;
-					if (volumeDepth > _MaxDistance) {
+					if (volumeDepth > _MaxDistance || volumeDepth > depth) {
 						break;
 					}
 
 					float3 pos = ro + volumeDepth * rd;
-					bool isInVolume = map(pos) < 0.0;
-					if (isInVolume)
+					if (map(pos) < 0.0)
 					{
 						//opaqueVisibility -= 0.01;
 						//opaqueVisibility = max(0, opaqueVisibility);
 
 						float previousOpaqueVisibility = opaqueVisibility;
-						opaqueVisibility *= BeerLambert(0.15, marchSize);
+						opaqueVisibility *= BeerLambert(_AbsorptionCoefficient, marchSize);
 						float absorptionFromMarch = previousOpaqueVisibility - opaqueVisibility;
 
-						//float lightDistance = _WorldSpaceLightPos0 - pos;
-						//float3 lightColor = _LightColor * GetLightAttenuation(lightDistance);
-						volumetricColor += absorptionFromMarch * _LightColor;
+						float lightDistance = length(_LightPos - pos);
+						float3 lightColor = _LightColor * GetLightAttenuation(lightDistance);
+						
+						float3 lightDirection = pos - _LightPos;
+						lightDirection = lightDirection / length(lightDirection);
+						lightColor *= GetLightVisiblity(_LightPos, lightDirection, lightDistance, 25, marchSize * 1.3);
+
+						//if (lightDistance < 10)
+						//{
+						//	lightColor.rgb = 1;
+						//}
+						//else {
+						//	lightColor.rgb = 0;
+						//}
+
+
+						volumetricColor += absorptionFromMarch * lightColor;
 					}
 				}
 				return float4(volumetricColor, 1 - opaqueVisibility);
