@@ -4,7 +4,7 @@ Shader "TeeNik/RaymarchingShader"
     {
         _MainTex ("Texture", 2D) = "white" {}
 		_Accuracy("Accuracy", Range(0.001, 0.1)) = 0.01
-		_MaxIterations("MaxIterations", Range(0, 300)) = 64
+		_MaxIterations("MaxIterations", float) = 64
 		_RandomBorder("RandomBorder", Range(0.0, 1.0)) = .99
 
 		_LightColor("LightColor", Color) = (1,1,1,1)
@@ -18,7 +18,8 @@ Shader "TeeNik/RaymarchingShader"
 		_AOIterations("AOIterations", float) = 1.0
 		_AOIntensity("AOIntensity", float) = 1.0
 
-			
+		_TimeScale("AOIntensity", Range(0.0, 1.0)) = 1.0
+
     }
     SubShader
     {
@@ -66,6 +67,8 @@ Shader "TeeNik/RaymarchingShader"
 			uniform float _AOIterations;
 			uniform float _AOIntensity;
 
+			uniform float _TimeScale;
+
             struct appdata
             {
                 float4 vertex : POSITION;
@@ -112,12 +115,31 @@ Shader "TeeNik/RaymarchingShader"
 
 			float map(float3 pos)
 			{
-				//if (_ModInterval.x > 0 && _ModInterval.y > 0 && _ModInterval.z > 0)
-				//{
-				//	float modX = pMod1(pos.x, _ModInterval.x);
-				//	float modY = pMod1(pos.y, _ModInterval.y);
-				//	float modZ = pMod1(pos.z, _ModInterval.z);
-				//}
+				if (_ModInterval.x > 0 && _ModInterval.y > 0 && _ModInterval.z > 0)
+				{
+					float modX = pMod1(pos.x, _ModInterval.x);
+					float modY = pMod1(pos.y, _ModInterval.y);
+					float modZ = pMod1(pos.z, _ModInterval.z);
+				}
+
+				float t = _Time.y * _TimeScale;
+				float4 vs1 = cos(t * float4(0.87, 1.13, 1.2, 1.0) + float4(0.0, 3.32, 0.97, 2.85)) * float4(-1.7, 2.1, 2.37, -1.9);
+				float4 vs2 = cos(t * float4(1.07, 0.93, 1.1, 0.81) + float4(0.3, 3.02, 1.15, 2.97)) * float4(1.77, -1.81, 1.47, 1.9);
+				
+				float4 sphere1 = float4(vs1.x, 0.0, vs1.y, 1.0);
+				float4 sphere2 = float4(vs1.z, vs1.w, vs2.z, 0.9);
+				float4 sphere3 = float4(vs2.x, vs2.y, vs2.w, 0.8);
+				
+				float sp1 = sdSphere(pos - sphere1.xyz, sphere1.w);
+				float sp2 = sdSphere(pos - sphere2.xyz, sphere2.w);
+				float sp3 = sdSphere(pos - sphere3.xyz, sphere3.w);
+				
+				float sp12 = opSmoothUnion(sp1, sp2, 0.5);
+				float sp123 = opSmoothUnion(sp12, sp3, 0.5);
+				return sp123;
+				
+				return sdSphere(pos - _Sphere.xyz, _Sphere.w);
+
 				float torus = sdTorus(pos - _Torus.xyz, float2(_Torus.w, 0.4));
 
 				float ground = sdPlane(pos, float4(0, 1, 0, 0));
@@ -188,6 +210,7 @@ Shader "TeeNik/RaymarchingShader"
 				float3 color = _MainColor.rgb;
 				//directional light
 				float3 light = (_LightColor * dot(_WorldSpaceLightPos0, normal) * 0.5 + 0.5) * _LightIntensity;
+
 				//shadow
 				float shadow = softShadow(pos, _WorldSpaceLightPos0, _ShadowDistance.x, _ShadowDistance.y, _ShadowPenumbra) * 0.5 + 0.5;
 				shadow = max(0.0, pow(shadow, _ShadowIntensity));
@@ -220,14 +243,8 @@ Shader "TeeNik/RaymarchingShader"
 					{
 						float3 normal = getNormal(pos);
 						float3 shading = getShading(pos, normal);
+						result = fixed4(shading, 1.0);
 
-						//float3 randColor = float3(0, 0, 0);
-						//if (random(pos) > _RandomBorder)
-						//{
-						//	randColor = float3(1, 1, 1);
-						//}
-
-						result = fixed4(shading, 1);
 						break;
 					}
 
@@ -246,7 +263,7 @@ Shader "TeeNik/RaymarchingShader"
 				float3 rayDirection = normalize(i.ray.xyz);
 				float3 rayOrigin = _WorldSpaceCameraPos;
 				fixed4 result = raymarching(rayOrigin, rayDirection, depth);
-
+				
 				return fixed4(col * (1.0 - result.w) + result.xyz * result.w, 1.0);
             }
             ENDCG

@@ -10,21 +10,6 @@ public class RaymarchingCamera : SceneViewFilter
 
     public Material RaymarchingMaterial;
 
-
-    //private Material _raymarchingMaterial;
-    //public Material RaymarchingMaterial
-    //{
-    //    get
-    //    {
-    //        if (!_raymarchingMaterial && _shader)
-    //        {
-    //            _raymarchingMaterial = new Material(_shader);
-    //            _raymarchingMaterial.hideFlags = HideFlags.HideAndDontSave;
-    //        }
-    //        return _raymarchingMaterial;
-    //    }
-    //}
-
     private Camera _camera;
     public Camera Camera
     {
@@ -48,6 +33,8 @@ public class RaymarchingCamera : SceneViewFilter
     public Color MainColor;
     public Vector3 ModInterval;
 
+    public Transform LightPos;
+
     void OnRenderImage(RenderTexture source, RenderTexture destination)
     {
         if (!RaymarchingMaterial)
@@ -59,6 +46,7 @@ public class RaymarchingCamera : SceneViewFilter
         RaymarchingMaterial.SetMatrix("_CamFrustum", CamFrustum(Camera));
         RaymarchingMaterial.SetMatrix("_CamToWorld", Camera.cameraToWorldMatrix);
         RaymarchingMaterial.SetFloat("_MaxDistance", MaxDistance);
+        RaymarchingMaterial.SetVector("_LightPos", LightPos.position);
 
         RaymarchingMaterial.SetVector("_Sphere", Sphere ? new Vector4(Sphere.localPosition.x, Sphere.localPosition.y, Sphere.localPosition.z, Sphere.localScale.x) : Vector4.one);
         RaymarchingMaterial.SetVector("_Box", Box ? new Vector4(Box.position.x, Box.position.y, Box.position.z, Box.localScale.x) : Vector4.one);
