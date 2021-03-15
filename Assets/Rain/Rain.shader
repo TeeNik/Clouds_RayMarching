@@ -104,7 +104,7 @@ Shader "Unlit/Rain"
 				col = tex2Dlod(_MainTex, float4(i.uv + offset * _Distortion, 0, blur));
 				col *= 0.5;
 
-				col *= 0; col.rg = drop * dropPos * 10;
+				//col *= 0; col.rg = drop * dropPos * 10;
 
                 return col;
             }
