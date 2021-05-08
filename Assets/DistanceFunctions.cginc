@@ -1,4 +1,10 @@
-﻿float sdPlane(float3 p, float4 n)
+﻿float smin(float a, float b, float k)
+{
+	float res = exp(-k * a) + exp(-k * b);
+	return -log(res) / k;
+}
+
+float sdPlane(float3 p, float4 n)
 {
 	return dot(p, n.xyz) + n.w;
 }
@@ -88,3 +94,21 @@ float4x4 rotateY(float angle)
 		float4(0, 0, 0, 1)
 	);
 }
+
+/*
+float opDisplace(in sdf3d primitive, in vec3 p)
+{
+	float d1 = primitive(p);
+	float d2 = displacement(p);
+	return d1 + d2;
+}
+
+float opTwist(in sdf3d primitive, in vec3 p, float k)
+{
+	float c = cos(k * p.y);
+	float s = sin(k * p.y);
+	mat2  m = mat2(c, -s, s, c);
+	vec3  q = vec3(m * p.xz, p.y);
+	return primitive(q);
+}
+*/
