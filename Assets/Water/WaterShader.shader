@@ -99,20 +99,15 @@ Shader "TeeNik/WaterShader"
                 return o;
             }
 
-			float boxSphere(float3 pos)
+
+			float BeerLambert(float absorptionCoefficient, float distanceTraveled)
 			{
-				//float3 boxPoint = mul(_RotationMat, float4(pos - _Box.xyz, 1)).xyz;
-				float3 boxPoint = pos - _Box.xyz;
-				float sphere = sdSphere(boxPoint - _Sphere.xyz, _Sphere.w);
-				float box = sdRoundBox(boxPoint, _Box.www, 0.5);
-				float result = opSmoothSubtraction(sphere, box, 0.5);
-				return result;
+				return exp(-absorptionCoefficient * distanceTraveled);
 			}
 
-			float random(float3 st) {
-				return frac(sin(dot(st.xyz,
-					float3(12.9898, 78.233, 51.489))) *
-					43758.5453123);
+			float GetLightAttenuation(float distanceToLight)
+			{
+				return 1.0 / pow(distanceToLight, 1);
 			}
 
 			float hash(float n) { return frac(sin(n) * 753.5453123); }
@@ -133,14 +128,15 @@ Shader "TeeNik/WaterShader"
 			{
 				float t = _Time.y * _TimeScale;
 
-				float sphere = sdSphere(pos, 1.75) + noise(pos * 1.0 + t * 0.75);
-				float t1 = sphere;
+				float sphere = sdSphere(pos, 2.75) + noise(pos * 1.0 + t * 1.75);
+				float torus = sdTorus(pos, float2(2.5, 1.0)) + noise(pos * 1.25 + t * 1.75);
 
+				float t1 = sphere;
+				
 				t1 = smin(t1, sdSphere(pos + float3(1.8, 0.0, 0.0), 0.2), 2.0);
 				t1 = smin(t1, sdSphere(pos + float3(-1.8, 0.0, -1.0), 0.2), 2.0);
 
 				return t1;
-
 
 				if (_ModInterval.x > 0 && _ModInterval.y > 0 && _ModInterval.z > 0)
 				{
@@ -152,31 +148,24 @@ Shader "TeeNik/WaterShader"
 				float4 vs1 = cos(t * float4(0.87, 1.13, 1.2, 1.0) + float4(0.0, 3.32, 0.97, 2.85)) * float4(-1.7, 2.1, 2.37, -1.9);
 				float4 vs2 = cos(t * float4(1.07, 0.93, 1.1, 0.81) + float4(0.3, 3.02, 1.15, 2.97)) * float4(1.77, -1.81, 1.47, 1.9);
 				
-				float4 sphere1 = float4(vs1.x, 0.0, vs1.y, 1.0);
-				float4 sphere2 = float4(vs1.z, vs1.w, vs2.z, 0.9);
-				float4 sphere3 = float4(vs2.x, vs2.y, vs2.w, 0.8);
+				float4 sphere1 = float4(vs1.x, 0.0, vs1.y, 2.0);
+				float4 sphere2 = float4(vs1.z, vs1.w, vs2.z, 1.9);
+				float4 sphere3 = float4(vs2.x, vs2.y, vs2.w, 1.8);
 				
-				float sp1 = sdSphere(pos - sphere1.xyz, sphere1.w);
-				float sp2 = sdSphere(pos - sphere2.xyz, sphere2.w);
-				float sp3 = sdSphere(pos - sphere3.xyz, sphere3.w);
+				float sp1 = sdSphere(pos - sphere1.xyz, sphere1.w) + noise(pos * 1.0 + t * 1.75);
+				float sp2 = sdSphere(pos - sphere2.xyz, sphere2.w) + noise(pos * 1.0 + t * 1.75);
+				float sp3 = sdSphere(pos - sphere3.xyz, sphere3.w) + noise(pos * 1.0 + t * 1.25);
 				
 				float sp12 = opSmoothUnion(sp1, sp2, 0.5);
 				float sp123 = opSmoothUnion(sp12, sp3, 0.5);
+				//sp123 = opSmoothUnion(sp123, sphere, 0.5);
 				return sp123;
-				
-				return sdSphere(pos - _Sphere.xyz, _Sphere.w);
-
-				float torus = sdTorus(pos - _Torus.xyz, float2(_Torus.w, 0.4));
-
-				float ground = sdPlane(pos, float4(0, 1, 0, 0));
-				float bs = boxSphere(pos);
-				float bt = opSmoothUnion(bs, torus, 0.5);
-				
-				return opU(ground, bt);
-
 			}
 
-			float map2(float3 pos) {
+			float map2(float3 pos) 
+			{
+				float octahedron = sdOctahedron(pos, 1.0);
+				return octahedron;
 
 				//float sphere = distSphere(pos, 1.0) + noise(pos * 1.2 + vec3(-0.3) + iTime*0.2);
 				float sphere = sdSphere(pos, 0.45);
@@ -268,6 +257,10 @@ Shader "TeeNik/WaterShader"
 				color = lerp(refract(normal, rd, 0.5) * 0.5 + float3(0.5, 0.5, 0.5), color, rim);
 				//color = mix( vec3(0.1), color, rim );
 				color += rim * 0.6;
+
+				float3 light = (_LightColor * dot(_WorldSpaceLightPos0, normal) * 0.5 + 0.5) * _LightIntensity;
+				color = float3(0.2, 0.2, 0.2) * light;
+
 			}
 
 			void raymarching2(float3 ro, float3 rd, inout float3 color, float depth)
@@ -323,50 +316,11 @@ Shader "TeeNik/WaterShader"
 				//color *= vec3(mix(0.25,1.0,shadowVal));
 
 				color *= float3(lerp(0.8, 1.0, ao), lerp(0.8, 1.0, ao), lerp(0.8, 1.0, ao));
-				return color;
-			}
 
-			float BeerLambert(float absorptionCoefficient, float distanceTraveled)
-			{
-				return exp(-absorptionCoefficient * distanceTraveled);
-			}
+				//float3 light = (_LightColor * dot(_WorldSpaceLightPos0, normal) * 0.5 + 0.5) * _LightIntensity;
+				//color = float3(0.2, 0.2, 0.2) * light;
 
-			float GetLightAttenuation(float distanceToLight)
-			{
-				return 1.0 / pow(distanceToLight, 1);
-			}
-
-			float4 getShading1(in float3 ro, in float3 rd, float depth)
-			{
-				float volumeDepth = 0.0f;
-				float opaqueVisibility = 1.0f;
-				const float marchSize = _MarchSize;
-				float3 volumetricColor;
-
-				for (int i = 0; i < _MaxIterations; ++i)
-				{
-					volumeDepth += marchSize;
-					if (volumeDepth > _MaxDistance) {
-						break;
-					}
-
-					float3 pos = ro + volumeDepth * rd;
-					bool isInVolume = map(pos) < _Accuracy;
-					if (isInVolume)
-					{
-						//opaqueVisibility -= 0.01;
-						//opaqueVisibility = max(0, opaqueVisibility);
-
-						float previousOpaqueVisibility = opaqueVisibility;
-						opaqueVisibility *= BeerLambert(0.5, marchSize);
-						float absorptionFromMarch = previousOpaqueVisibility - opaqueVisibility;
-						
-						//float lightDistance = _WorldSpaceLightPos0 - pos;
-						//float3 lightColor = _LightColor * GetLightAttenuation(lightDistance);
-						volumetricColor += absorptionFromMarch * _LightColor;
-					}
-				}
-				return float4(volumetricColor, 1-opaqueVisibility);
+				return 1.0 - color;
 			}
 
 			fixed4 raymarching(float3 ro, float3 rd, float depth)
@@ -404,12 +358,19 @@ Shader "TeeNik/WaterShader"
 
 				float3 rayDirection = normalize(i.ray.xyz);
 				float3 rayOrigin = _WorldSpaceCameraPos;
-				fixed4 result = raymarching(rayOrigin, rayDirection, depth);
+				float3 color = float3(0.0, 0.0, 0.0);
+				//raymarching2(rayOrigin, rayDirection, color, depth);
+				//fixed4 result = fixed4(color, 0.5);
 				
+				fixed4 result = raymarching(rayOrigin, rayDirection, depth);
+
 				//fixed3 col = tex2D(_MainTex, i.uv + (result.r / 5) * result.w);
+
+				fixed3 back = fixed3(0.6, i.uv.x, 1.0) * 0.5;
+
 				fixed3 col = tex2D(_MainTex, i.uv);
 
-				return fixed4(col * (1.0 - result.w) + result.xyz * result.w, 1.0);
+				return fixed4(back * (1.0 - result.w) + result.xyz * result.w, 1.0);
             }
             ENDCG
         }
