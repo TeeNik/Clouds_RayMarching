@@ -1,4 +1,6 @@
-﻿float sdPlane(float3 p, float4 n)
+﻿#define PI 3.14
+
+float sdPlane(float3 p, float4 n)
 {
 	return dot(p, n.xyz) + n.w;
 }
@@ -29,6 +31,27 @@ float sdTorus(float3 p, float2 t)
 {
 	float2 q = float2(length(p.xz) - t.x, p.y);
 	return length(q) - t.y;
+}
+
+float sdRoundCone(float3 p, float r1, float r2, float h)
+{
+	float2 q = float2(length(p.xy), p.z);
+
+	float b = (r1 - r2) / h;
+	float a = sqrt(1.0 - b * b);
+	float k = dot(q, float2(-b, a));
+
+	if (k < 0.0) return length(q) - r1;
+	if (k > a * h) return length(q - float2(0.0, h)) - r2;
+
+	return dot(q, float2(a, b)) - r1;
+}
+
+float sdCappedTorus(in float3 p, in float3 sc, in float ra, in float rb)
+{
+	p.x = abs(p.x);
+	float k = (sc.y * p.x > sc.x * p.z) ? dot(p.xz, sc) : length(p.xz);
+	return sqrt(dot(p, p) + ra * ra - 2.0 * ra * k) - rb;
 }
 
 float sdOctahedron(float3 p, float s)
