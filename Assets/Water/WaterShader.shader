@@ -124,19 +124,46 @@ Shader "TeeNik/WaterShader"
 						lerp(hash(n + 270.0), hash(n + 271.0), f.x), f.y), f.z);
 			}
 
+			float fbm_4(in float3 x)
+			{
+				float f = 2.0;
+				float s = 0.5;
+				float a = 0.0;
+				float b = 0.5;
+				for (int i = 0; i < 4; i++)
+				{
+					float n = noise(x);
+					a += b * n;
+					b *= s;
+					//x = mul(mul(m3, f), x);
+					x = f * x;
+				}
+				return a;
+			}
+
 			float map(float3 pos)
 			{
-				float t = _Time.y * _TimeScale;
+				float t = _Time.y * _TimeScale / 2;
+				float period = max(0, (t % 2) - 1);
+				float radius = 3.0 * (sin(period * PI + PI / 2));
 
-				float sphere = sdSphere(pos, 2.75) + noise(pos * 1.0 + t * 1.75);
-				float torus = sdTorus(pos, float2(2.5, 1.0)) + noise(pos * 1.25 + t * 1.75);
+				float sphere = sdSphere(pos, 5.75) + noise(pos * 1.0 + t * 1.75);
+				float torus = sdTorus(pos, float2(radius, 0.55)) + fbm_4(pos * 1.25 + t);
+				float octahedron = sdOctahedron(pos, 1.0);
 
-				float t1 = sphere;
+				float value = clamp(sin(t), 0.0, 1.0);
+				//float t1 = sphere * value + octahedron * (1.0 - value);
+				float t1 = sphere * 0.0 + octahedron;
+
+				float3 sphere1Point = mul(rotateY(2 * PI * period), float4(pos, 1.0)).xyz;
+				//float3 sphere1Point = float4(pos, 1.0).xyz;
 				
-				t1 = smin(t1, sdSphere(pos + float3(1.8, 0.0, 0.0), 0.2), 2.0);
-				t1 = smin(t1, sdSphere(pos + float3(-1.8, 0.0, -1.0), 0.2), 2.0);
-
+				t1 = smin(t1, sdSphere(sphere1Point + float3(radius, 0.0, 0.0), 0.2), 3.0);
+				t1 = smin(t1, sdSphere(sphere1Point + float3(-radius, 0.0, 0.0), 0.2), 3.0);
+				
 				return t1;
+
+				return smin(t1, torus, 3.0);
 
 				if (_ModInterval.x > 0 && _ModInterval.y > 0 && _ModInterval.z > 0)
 				{
@@ -164,7 +191,13 @@ Shader "TeeNik/WaterShader"
 
 			float map2(float3 pos) 
 			{
-				float octahedron = sdOctahedron(pos, 1.0);
+				float t = _Time.y * _TimeScale;
+				float radius = 3.0 * abs(sin(t));
+
+				float octahedron = sdOctahedron(pos, 1.05);
+				float torus = sdTorus(pos, float2(radius, 0.55)) + fbm_4(pos * 1.25 + t);
+				return smin(octahedron, torus, 3.0);
+
 				return octahedron;
 
 				//float sphere = distSphere(pos, 1.0) + noise(pos * 1.2 + vec3(-0.3) + iTime*0.2);
@@ -258,8 +291,8 @@ Shader "TeeNik/WaterShader"
 				//color = mix( vec3(0.1), color, rim );
 				color += rim * 0.6;
 
-				float3 light = (_LightColor * dot(_WorldSpaceLightPos0, normal) * 0.5 + 0.5) * _LightIntensity;
-				color = float3(0.2, 0.2, 0.2) * light;
+				//float3 light = (_LightColor * dot(_WorldSpaceLightPos0, normal) * 0.5 + 0.5) * _LightIntensity;
+				//color = float3(0.2, 0.2, 0.2) * light;
 
 			}
 
@@ -285,7 +318,7 @@ Shader "TeeNik/WaterShader"
 				}
 			}
 
-			float3 renderColor(float3 ro, float3 rd, float3 currPos, float depth)
+			float4 renderColor(float3 ro, float3 rd, float3 currPos, float depth)
 			{
 				float time = _Time.y * _TimeScale;
 				float3 color = float3(1.0, 1.0, 1.0);
@@ -308,7 +341,7 @@ Shader "TeeNik/WaterShader"
 
 				// refracted ray-march into the inside area
 				float3 color2 = float3(0.5, 0.5, 0.5);
-				raymarching2(currPos, refract(rd, normal, 0.85), color, depth);
+				//raymarching2(currPos, refract(rd, normal, 0.85), color, depth);
 				//renderRayMarch2( currPos, rayDirection, color2 );
 
 				//color = color2;
@@ -317,10 +350,10 @@ Shader "TeeNik/WaterShader"
 
 				color *= float3(lerp(0.8, 1.0, ao), lerp(0.8, 1.0, ao), lerp(0.8, 1.0, ao));
 
-				//float3 light = (_LightColor * dot(_WorldSpaceLightPos0, normal) * 0.5 + 0.5) * _LightIntensity;
-				//color = float3(0.2, 0.2, 0.2) * light;
+				float3 light = (_LightColor * dot(_WorldSpaceLightPos0, normal) * 0.5 + 0.5) * _LightIntensity;
+				color = float3(0.2, 0.2, 0.2) * light;
 
-				return 1.0 - color;
+				return float4(color, 1.0);
 			}
 
 			fixed4 raymarching(float3 ro, float3 rd, float depth)
@@ -341,7 +374,7 @@ Shader "TeeNik/WaterShader"
 					float dist = map(pos);
 					if (dist < _Accuracy) //hit
 					{
-						float4 shading = float4(renderColor(ro, rd, pos, depth), 0.5);
+						float4 shading = renderColor(ro, rd, pos, depth);
 						result = fixed4(shading.xyz, shading.w);
 						break;
 					}
