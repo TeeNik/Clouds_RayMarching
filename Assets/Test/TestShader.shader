@@ -128,36 +128,34 @@ Shader "TeeNik/TestShader"
 			{
 				float t = _Time.y * _TimeScale;
 
-				float sphere = sdSphere(pos, 5.75) + noise(pos * 1.0 + t * 1.75);
-				float torus = sdTorus(pos, float2(2.5, 1.0)) + noise(pos * 1.25 + t * 1.75);
-				
-				float absSin = abs(sin(t));
-				float rotAng = PI * abs(sin(t));
-				float torAng = PI * abs(sin(t * 2));
-				
-				float3 octPoint = mul(rotateY(rotAng + PI), float4(pos, 1.0)).xyz;
-				//float3 octPoint2 = mul(rotateY(an * 4), float4(pos, 1.0)).xyz;
+				float sphere = sdSphere(pos, 2.75) + noise(pos * 1.0 + t * 1.75);
+				//float torus = sdTorus(pos, float2(2.5, 1.0)) + noise(pos * 1.25 + t * 1.75);
+				//
+				//float absSin = abs(sin(t));
+				//float rotAng = PI * abs(sin(t));
+				//float torAng = PI * abs(sin(t * 2));
+				//
+				//float3 octPoint = mul(rotateY(rotAng + PI), float4(pos, 1.0)).xyz;
 				float octahedron = sdOctahedron(pos, 1.0);
-				
-				float3 sphere1Point = mul(rotateY(PI/2 + PI * abs(sin(t))), float4(pos, 1.0)).xyz;
-				float sphere1 = sdSphere(sphere1Point + float3(2.0, 0.0, 0.0), 0.2);
-				
-				float cappedTorus = sdCappedTorus(octPoint, float3(sin(torAng / 3), cos(torAng / 3), 1.0), 2.0, 0.5) + 0.5 * noise(pos * 1.0 + t * 1.75);
-				//float cappedTorus2 = sdCappedTorus(octPoint2, float3(sin(an), cos(an), 1.0), 2.0, 0.1) - 0.35 * noise(pos * 1.0 + t * 1.95);
-				
-				float cone = sdRoundCone(pos + float3(3.0, 0.0, 0.0), 0.5, 0.3, 0.2 + 2 * absSin);
-				return opU(cappedTorus, octahedron);
-
-				return smin(octahedron, cappedTorus, 5.0);
+				//
+				//float3 sphere1Point = mul(rotateY(PI/2 + PI * abs(sin(t))), float4(pos, 1.0)).xyz;
+				//float sphere1 = sdSphere(sphere1Point + float3(2.0, 0.0, 0.0), 0.2);
+				//
+				//float cappedTorus = sdCappedTorus(octPoint, float3(sin(torAng / 3), cos(torAng / 3), 1.0), 2.0, 0.5) + 0.5 * noise(pos * 1.0 + t * 1.75);
+				//
+				//float cone = sdRoundCone(pos + float3(3.0, 0.0, 0.0), 0.5, 0.3, 0.2 + 2 * absSin);
+				//return opU(cappedTorus, octahedron);
+				//
+				//return smin(octahedron, cappedTorus, 5.0);
 				//return smin(sphere1, opU(cappedTorus2, cappedTorus), 5.0);
 				//
-				//float value = clamp(sin(t), 0.0, 1.0);
-				//float t1 = sphere * value * 0.0 + octahedron * (1.0 - value);
-				//
-				//t1 = min(octahedron, sdSphere(pos + float3(3.0 * cos(t), 0.0, 3.0 * abs(sin(t))), 0.2));
-				//t1 = min(t1, sdSphere(pos + float3(-3.0 * cos(t), 0.0, 3.0 * -abs(sin(t))), 0.2));
+				float value = clamp(sin(t), 0.0, 1.0);
+				float t1 = sphere * 1.0 + octahedron * 0.0;
 				
-				//return t1;
+				t1 = smin(t1, sdSphere(pos + float3(3.0 * cos(t), 0.0, 3.0 * abs(sin(t))), 0.7), 3.0);
+				t1 = smin(t1, sdSphere(pos + float3(-3.0 * cos(t), 0.0, 3.0 * -abs(sin(t))), 0.7), 3.0);
+				
+				return t1;
 				
 				//if (_ModInterval.x > 0 && _ModInterval.y > 0 && _ModInterval.z > 0)
 				//{
@@ -166,27 +164,27 @@ Shader "TeeNik/TestShader"
 				//	float modZ = pMod1(pos.z, _ModInterval.z);
 				//}
 				//
-				//float4 vs1 = cos(t * float4(0.87, 1.13, 1.2, 1.0) + float4(0.0, 3.32, 0.97, 2.85)) * float4(-1.7, 2.1, 2.37, -1.9);
-				//float4 vs2 = cos(t * float4(1.07, 0.93, 1.1, 0.81) + float4(0.3, 3.02, 1.15, 2.97)) * float4(1.77, -1.81, 1.47, 1.9);
-				//
-				//float4 sphere1 = float4(vs1.x, 0.0, vs1.y, 2.0);
-				//float4 sphere2 = float4(vs1.z, vs1.w, vs2.z, 1.9);
-				//float4 sphere3 = float4(vs2.x, vs2.y, vs2.w, 1.8);
-				//
-				//float sp1 = sdSphere(pos - sphere1.xyz, sphere1.w) + noise(pos * 1.0 + t * 30.75);
-				//float sp2 = sdSphere(pos - sphere2.xyz, sphere2.w) + noise(pos * 1.0 + t * 30.75);
-				//float sp3 = sdSphere(pos - sphere3.xyz, sphere3.w) + noise(pos * 1.0 + t * 30.25);
-				//
-				//float sp12 = opSmoothUnion(sp1, sp2, 0.5);
-				//float sp123 = opSmoothUnion(sp12, sp3, 0.5);
-				////sp123 = opSmoothUnion(sp123, sphere, 0.5);
-				//return sp123;
+				float4 vs1 = cos(t * float4(0.87, 1.13, 1.2, 1.0) + float4(0.0, 3.32, 0.97, 2.85)) * float4(-1.7, 2.1, 2.37, -1.9);
+				float4 vs2 = cos(t * float4(1.07, 0.93, 1.1, 0.81) + float4(0.3, 3.02, 1.15, 2.97)) * float4(1.77, -1.81, 1.47, 1.9);
+				
+				float4 sphere1 = float4(vs1.x, 0.0, vs1.y, 2.0);
+				float4 sphere2 = float4(vs1.z, vs1.w, vs2.z, 1.9);
+				float4 sphere3 = float4(vs2.x, vs2.y, vs2.w, 1.8);
+				
+				float sp1 = sdSphere(pos - sphere1.xyz, sphere1.w) + noise(pos * 1.0 + t * 1.75);
+				float sp2 = sdSphere(pos - sphere2.xyz, sphere2.w) + noise(pos * 1.0 + t * 1.75);
+				float sp3 = sdSphere(pos - sphere3.xyz, sphere3.w) + noise(pos * 1.0 + t * 1.25);
+				
+				float sp12 = opSmoothUnion(sp1, sp2, 0.5);
+				float sp123 = opSmoothUnion(sp12, sp3, 0.5);
+				//sp123 = opSmoothUnion(sp123, sphere, 0.5);
+				return sp123;
 			}
 
 			float map2(float3 pos) 
 			{
 				float octahedron = sdOctahedron(pos, 1.05);
-				return octahedron;
+				//return octahedron;
 
 				//float sphere = distSphere(pos, 1.0) + noise(pos * 1.2 + vec3(-0.3) + iTime*0.2);
 				float sphere = sdSphere(pos, 0.45);
@@ -279,8 +277,8 @@ Shader "TeeNik/TestShader"
 				//color = mix( vec3(0.1), color, rim );
 				color += rim * 0.6;
 
-				float3 light = (_LightColor * dot(_WorldSpaceLightPos0, normal) * 0.5 + 0.5) * _LightIntensity;
-				color = float3(0.2, 0.2, 0.2) * light;
+				//float3 light = (_LightColor * dot(_WorldSpaceLightPos0, normal) * 0.5 + 0.5) * _LightIntensity;
+				//color = float3(0.2, 0.2, 0.2) * light;
 
 			}
 
@@ -329,7 +327,7 @@ Shader "TeeNik/TestShader"
 
 				// refracted ray-march into the inside area
 				float3 color2 = float3(0.5, 0.5, 0.5);
-				//raymarching2(currPos, refract(rd, normal, 0.85), color, depth);
+				raymarching2(currPos, refract(rd, normal, 0.85), color, depth);
 				//renderRayMarch2( currPos, rayDirection, color2 );
 
 				//color = color2;
@@ -341,7 +339,7 @@ Shader "TeeNik/TestShader"
 				//float3 light = (_LightColor * dot(_WorldSpaceLightPos0, normal) * 0.5 + 0.5) * _LightIntensity;
 				//color = float3(0.2, 0.2, 0.2) * light;
 
-				return 1.0 - color;
+				return color;
 			}
 
 			fixed4 raymarching(float3 ro, float3 rd, float depth)
@@ -363,7 +361,7 @@ Shader "TeeNik/TestShader"
 					if (dist < _Accuracy) //hit
 					{
 						float4 shading = float4(renderColor(ro, rd, pos, depth), 0.5);
-						result = fixed4(shading.xyz, shading.w);
+						result = fixed4(shading.xyz, 0.5);
 						break;
 					}
 					t += dist;
