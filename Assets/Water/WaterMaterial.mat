@@ -95,7 +95,7 @@ Material:
     - _StencilReadMask: 255
     - _StencilWriteMask: 255
     - _Strength: 0.2
-    - _TimeScale: 1
+    - _TimeScale: 0.272
     - _UVSec: 0
     - _UseUIAlphaClip: 0
     - _ZWrite: 1
