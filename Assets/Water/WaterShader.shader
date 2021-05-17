@@ -148,7 +148,7 @@ Shader "TeeNik/WaterShader"
 
 				float radius = 3.0 * (abs(sin(period * PI + PI / 2)));
 				//float torusScale = 2.0 * (period - 2.0 * max(period - 0.5, 0.0));
-				float torusScale = smoothstep(0.0, 0.35, sin(PI * period));
+				float torusScale = smoothstep(0.0, 0.5, sin(PI * period));
 				
 				float3 sphere1Point = mul(rotateY(2 * PI * period), float4(pos, 1.0)).xyz;
 				float t1 = torusScale * sdTorus(pos, float2(radius, 0.55)) + fbm_4(pos * 1.25 + t);
