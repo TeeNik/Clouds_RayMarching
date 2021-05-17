@@ -147,12 +147,18 @@ Shader "TeeNik/WaterShader"
 				float period = max(0, (t % 2) - 1);
 
 				float radius = 3.0 * (abs(sin(period * PI + PI / 2)));
-				float torusScale = ceil(period);
-				torusScale = period - 2.0 * max(period - 0.5, 0.0);
+				//float torusScale = 2.0 * (period - 2.0 * max(period - 0.5, 0.0));
+				float torusScale = smoothstep(0.0, 0.35, sin(PI * period));
+				
+				float3 sphere1Point = mul(rotateY(2 * PI * period), float4(pos, 1.0)).xyz;
+				float t1 = torusScale * sdTorus(pos, float2(radius, 0.55)) + fbm_4(pos * 1.25 + t);
+				t1 = smin(t1, sdSphere(sphere1Point + float3(radius, 0.0, 0.0), torusScale * 0.2), 3.0);
+				t1 = smin(t1, sdSphere(sphere1Point + float3(-radius, 0.0, 0.0), torusScale * 0.2), 3.0);
+
 
 				float octahedron = sdOctahedron(pos, 1.05);
-				float torus = sdTorus(pos, float2(radius, torusScale * 1.55)) + fbm_4(pos * 1.25 + t);
-				return torus;
+				float torus = (0.0);
+				return t1;
 				return smin(octahedron, torus, 3.0);
 
 				if (_ModInterval.x > 0 && _ModInterval.y > 0 && _ModInterval.z > 0)
@@ -299,14 +305,11 @@ Shader "TeeNik/WaterShader"
 				float3 S = normalize(random * 2 - 1);
 				float3 Ns = normalize(lerp(normal, S, 0.5));
 
-				float n = noise(currPos * 1000 * time) * 2 - 1;
+				float n = noise(currPos * 1000 ) * 2 - 1;
 				n *= dot(_WorldSpaceLightPos0, normal) * 0.5 + 0.5;
 				n *= n;
 
 				color += (n * 0.15);
-
-				float t = _Time.y * _TimeScale / 2;
-				color = max(0, (t % 2) - 1);
 
 				return float4(color, 1.0);
 			}
@@ -357,11 +360,11 @@ Shader "TeeNik/WaterShader"
 				//color = normal;
 
 				// refracted ray-march into the inside area
-				//color = raymarching2(currPos, refract(rd, normal, 0.85), color, depth);
+				color *= raymarching2(currPos, refract(rd, normal, 0.85), color, depth);
 
 				color *= float3(lerp(0.8, 1.0, ao), lerp(0.8, 1.0, ao), lerp(0.8, 1.0, ao));
 
-				return float4(1 - color, 0.5);
+				return float4(1.0 - color, 0.5);
 			}
 
 			fixed4 raymarching(float3 ro, float3 rd, float depth, inout float3 outPos)
