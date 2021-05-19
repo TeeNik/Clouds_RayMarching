@@ -34,7 +34,7 @@ Shader "TeeNik/WaterShader"
 			#pragma target 3.0
 
             #include "UnityCG.cginc"
-			#include "../DistanceFunctions.cginc"
+			#include "../../DistanceFunctions.cginc"
 
 			sampler2D _MainTex;
 
