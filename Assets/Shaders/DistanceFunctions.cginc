@@ -119,6 +119,19 @@ float pMod1 (inout float p, float size)
 	return c;
 }
 
+float4x4 rotateX(float angle)
+{
+	float c = cos(angle);
+	float s = sin(angle);
+
+	return float4x4(
+		float4(1, 0, 0, 0),
+		float4(0, c, -s, 0),
+		float4(0, s, c, 0),
+		float4(0, 0, 0, 1)
+		);
+}
+
 float4x4 rotateY(float angle)
 {
 	float c = cos(angle);
@@ -130,6 +143,19 @@ float4x4 rotateY(float angle)
 		float4(-s, 0, c, 0),
 		float4(0, 0, 0, 1)
 	);
+}
+
+float4x4 rotateZ(float angle)
+{
+	float c = cos(angle);
+	float s = sin(angle);
+
+	return float4x4(
+		float4(c, -s, 0, 0),
+		float4(s, c, 0, 0),
+		float4(0, 0, 1, 0),
+		float4(0, 0, 0, 1)
+		);
 }
 
 /*

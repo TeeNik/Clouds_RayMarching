@@ -29,6 +29,8 @@ public class RaymarchingCamera : SceneViewFilter
     public Transform Box;
     public Transform Torus;
 
+    public Transform TimeObject;
+
     public Transform DirectionalLight;
     public Color MainColor;
     public Vector3 ModInterval;
@@ -55,6 +57,8 @@ public class RaymarchingCamera : SceneViewFilter
         RaymarchingMaterial.SetVector("_LightDir", DirectionalLight ? DirectionalLight.forward : Vector3.down);
         RaymarchingMaterial.SetColor("_MainColor", MainColor);
         RaymarchingMaterial.SetVector("_ModInterval", ModInterval);
+
+        RaymarchingMaterial.SetVector("_CustomTime", TimeObject ? new Vector3(TimeObject.position.x, TimeObject.position.y, TimeObject.position.z) : Vector3.zero);
 
         Matrix4x4 rotMatrix = Matrix4x4.TRS(
             Vector3.one,
