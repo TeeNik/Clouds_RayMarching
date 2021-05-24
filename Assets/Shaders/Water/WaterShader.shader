@@ -34,7 +34,7 @@ Shader "TeeNik/WaterShader"
 			#pragma target 3.0
 
             #include "UnityCG.cginc"
-			#include "../../DistanceFunctions.cginc"
+			#include "../DistanceFunctions.cginc"
 
 			sampler2D _MainTex;
 
@@ -70,6 +70,7 @@ Shader "TeeNik/WaterShader"
 			uniform float _MarchSize;
 			uniform float _TimeScale;
 
+			uniform float3 _CustomTime;
 
             struct appdata
             {
@@ -141,25 +142,53 @@ Shader "TeeNik/WaterShader"
 				return a;
 			}
 
+			float sm(float a, float b, float m, float v)
+			{
+				return smoothstep(a / m, b / m, v / m);
+			}
+
+			float4 getTimeSequence() {
+				float t = _Time.y * _TimeScale;
+				//float x = max(0, (t % 2) - 1);
+
+				float m = 6.0;
+
+				float x = sm(1.0, 2.0, m, t % m);
+				float y = sm(1.0, 1.5, m, t % m) * (1.0 - sm(2.0, 2.5, m, t % m));
+
+				float z = sm(2.5, 3.5, m, t % m);
+				float w = sm(4.0, 5.5, m, t % m);
+
+				return float4(x, y, z, w);
+			}
+
 			float map(float3 pos)
 			{
 				float t = _Time.y * _TimeScale / 2;
 				float period = max(0, (t % 2) - 1);
 
-				float radius = 3.0 * (abs(sin(period * PI + PI / 2)));
-				//float torusScale = 2.0 * (period - 2.0 * max(period - 0.5, 0.0));
-				float torusScale = smoothstep(0.0, 0.5, sin(PI * period));
-				
-				float3 sphere1Point = mul(rotateY(2 * PI * period), float4(pos, 1.0)).xyz;
-				float t1 = torusScale * sdTorus(pos, float2(radius, 0.55)) + fbm_4(pos * 1.25 + t);
-				t1 = smin(t1, sdSphere(sphere1Point + float3(radius, 0.0, 0.0), torusScale * 0.2), 3.0);
-				t1 = smin(t1, sdSphere(sphere1Point + float3(-radius, 0.0, 0.0), torusScale * 0.2), 3.0);
+				float4 curve = getTimeSequence();
 
+				float octahedron = sdOctahedron(pos, 0.95);
 
-				float octahedron = sdOctahedron(pos, 1.05);
-				float torus = (0.0);
-				return t1;
-				return smin(octahedron, torus, 3.0);
+				float3 torusPoint1 = mul(rotateZ(PI / 4), float4(pos, 1.0)).xyz;
+				torusPoint1 = mul(rotateY(5 * t), float4(torusPoint1, 1.0)).xyz;
+				float torus1 = sdTorus(torusPoint1, float2(2.0 * sin(PI * curve.z), 0.5)) + 0.7 * fbm_4(torusPoint1 * 1.25 + t);
+
+				float3 torusPoint2 = mul(rotateZ(-PI / 4), float4(pos, 1.0)).xyz;
+				torusPoint2 = mul(rotateY(5 * t), float4(torusPoint2, 1.0)).xyz;
+				float torus2 = sdTorus(torusPoint2, float2(2.0 * sin(PI * curve.w), 0.5)) + 0.7 * fbm_4(torusPoint2 * 1.25 + t);
+				//return opSmoothUnion(octahedron, , 0.75);
+
+				float radius = 3.0 * (abs(sin(curve.x * PI / 2 + PI / 2)));
+				float3 sphere1Point = mul(rotateY(2 * PI * curve.x), float4(pos, 1.0)).xyz;
+				float t1 = sdSphere(sphere1Point + float3(radius, 0.0, 0.0), curve.y * 0.3) - 0.25 * fbm_4(pos * 2.25 + t);
+				t1 = smin(t1, sdSphere(sphere1Point + float3(-radius, 0.0, 0.0), curve.y * 0.3) - 0.25 * fbm_4(pos * 2.25 + t), 3.0);
+
+				t1 = opU(t1, torus1);
+				t1 = opU(t1, torus2);
+
+				return opSmoothUnion(octahedron, t1, 1.0);
 
 				if (_ModInterval.x > 0 && _ModInterval.y > 0 && _ModInterval.z > 0)
 				{
@@ -188,8 +217,8 @@ Shader "TeeNik/WaterShader"
 			float map2(float3 pos) 
 			{
 				float t = _Time.y * _TimeScale / 2;
-				float period = max(0, (t % 2) - 1);
-				float radius = 3.0 * (sin(period * PI + PI / 2));
+				float3 curve = getTimeSequence();
+				float radius = 3.0 * (sin(curve.x * PI / 2 + PI / 2));
 
 				float sphere = sdSphere(pos, 5.75) + noise(pos * 1.0 + t * 1.75);
 				float torus = sdTorus(pos, float2(radius, 0.55)) + fbm_4(pos * 1.25 + t);
@@ -199,11 +228,11 @@ Shader "TeeNik/WaterShader"
 				//float t1 = sphere * value + octahedron * (1.0 - value);
 				float t1 = sphere * 0.0 + octahedron;
 
-				float3 sphere1Point = mul(rotateY(2 * PI * period), float4(pos, 1.0)).xyz;
+				float3 sphere1Point = mul(rotateY(2 * PI * curve.x), float4(pos, 1.0)).xyz;
 				//float3 sphere1Point = float4(pos, 1.0).xyz;
 
-				t1 = smin(t1, sdSphere(sphere1Point + float3(radius, 0.0, 0.0), 0.2), 3.0);
-				t1 = smin(t1, sdSphere(sphere1Point + float3(-radius, 0.0, 0.0), 0.2), 3.0);
+				t1 = opU(t1, sdSphere(sphere1Point + float3(radius, 0.0, 0.0), 0.2));
+				t1 = opU(t1, sdSphere(sphere1Point + float3(-radius, 0.0, 0.0), 0.2));
 
 				return t1;
 
