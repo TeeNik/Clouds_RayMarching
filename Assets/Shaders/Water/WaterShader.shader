@@ -70,8 +70,6 @@ Shader "TeeNik/WaterShader"
 			uniform float _MarchSize;
 			uniform float _TimeScale;
 
-			uniform float3 _CustomTime;
-
             struct appdata
             {
                 float4 vertex : POSITION;
