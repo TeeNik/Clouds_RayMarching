@@ -68,6 +68,12 @@ float sdOctahedron(float3 p, float s)
 	return length(float3(q.x, q.y - s + k, q.z - k));
 }
 
+float sdCappedCylinder(float3 p, float r, float h)
+{
+	float2 d = abs(float2(length(p.xy), p.z)) - float2(h, r);
+	return min(max(d.x, d.y), 0.0) + length(max(d, 0.0));
+}
+
 // BOOLEAN OPERATORS //
 
 // Union
@@ -165,13 +171,12 @@ float opDisplace(in sdf3d primitive, in vec3 p)
 	float d2 = displacement(p);
 	return d1 + d2;
 }
-
-float opTwist(in sdf3d primitive, in vec3 p, float k)
+*/
+float3 opTwist(float3 p, float k)
 {
 	float c = cos(k * p.y);
 	float s = sin(k * p.y);
-	mat2  m = mat2(c, -s, s, c);
-	vec3  q = vec3(m * p.xz, p.y);
-	return primitive(q);
+	float2x2  m = float2x2(c, -s, s, c);
+	float3  q = float3(mul(m, p.xz), p.y);
+	return q;
 }
-*/
