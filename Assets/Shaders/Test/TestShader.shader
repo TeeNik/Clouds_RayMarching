@@ -304,6 +304,17 @@ Shader "TeeNik/TestShader"
 				}
 			}
 
+
+			float mapOctahedrons(float3 pos)
+			{
+				float octahedron = sdOctahedron(pos, 0.95);
+
+
+				float octahedron2 = opS(sdCappedCylinder(pos, 1.0, 0.35), octahedron);
+				octahedron2 = opU(sdSphere(pos, 0.15), octahedron2);
+				return octahedron2;
+			}
+
 			float3 renderColor(float3 ro, float3 rd, float3 currPos, float depth)
 			{
 				float time = _Time.y * _TimeScale;
@@ -336,8 +347,8 @@ Shader "TeeNik/TestShader"
 
 				color *= float3(lerp(0.8, 1.0, ao), lerp(0.8, 1.0, ao), lerp(0.8, 1.0, ao));
 
-				//float3 light = (_LightColor * dot(_WorldSpaceLightPos0, normal) * 0.5 + 0.5) * _LightIntensity;
-				//color = float3(0.2, 0.2, 0.2) * light;
+				float3 light = (_LightColor * dot(_WorldSpaceLightPos0, normal) * 0.5 + 0.5) * _LightIntensity;
+				color = float3(0.1, 0.1, 0.1) * light;
 
 				return color;
 			}
@@ -357,11 +368,11 @@ Shader "TeeNik/TestShader"
 					}
 
 					float3 pos = ro + rd * t;
-					float dist = map(pos);
+					float dist = mapOctahedrons(pos);
 					if (dist < _Accuracy) //hit
 					{
 						float4 shading = float4(renderColor(ro, rd, pos, depth), 0.5);
-						result = fixed4(shading.xyz, 0.5);
+						result = fixed4(shading.xyz, 1.0);
 						break;
 					}
 					t += dist;
