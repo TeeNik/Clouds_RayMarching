@@ -165,8 +165,9 @@ Shader "TeeNik/WaterShader"
 				float t = _Time.y * _TimeScale;
 				float m = 8.0;
 				float x = sm(4.5, 6.0, m, t % m) * (1.0 - sm(7.0, 7.5, m, t % m));
+				float y = sm(1.7, 1.8, m, t % m) * (1.0 - sm(2.2, 2.4, m, t % m)) + sm(2.8, 2.9, m, t % m) * (1.0 - sm(3.4, 3.6, m, t % m)) + sm(4.0, 4.1, m, t % m);
 
-				return float4(x, 0.0, 0.0, 0.0);
+				return float4(x, y, 0.0, 0.0);
 			}
 
 
@@ -178,13 +179,13 @@ Shader "TeeNik/WaterShader"
 				float4 curve = getTimeSequence();
 				float4 curve2 = getTimeSequence2();
 
-				float octahedron = sdOctahedron(pos, 0.95);// -0.15 * fbm_4(pos * 2.25 + t);
+				float octahedron = sdOctahedron(pos, 1.05  * curve2.y) - 0.15 * fbm_4(pos * 2.25 + t);
 				//float octahedron = sdOctahedron(mul(rotateX(2 * PI * t), float4(pos, 1.0)).xyz, 2.5) - 0.25 * fbm_4(pos * 2.25 + t);
-				//float octahedron2 = sdOctahedron(mul(rotateY(2 * PI * t), float4(mul(rotateZ(PI / 4), float4(pos, 1.0)).xyz, 1.0)).xyz, 2.5) - 0.25 * fbm_4(pos * 2.25 + t);
+				//float octahedron2 = sdOctahedron(mul(rotateY(2 * PI * t), float4(mul(rotateZ(PI / 4 * t), float4(pos, 1.0)).xyz, 1.0)).xyz, 2.5) - 0.25 * fbm_4(pos * 2.25 + t);
 				//return opSmoothUnion(octahedron, octahedron2, 0.5);
 
-				//float p = sdTorus(opTwist(mul(rotateY( PI * t), float4(pos, 1.0)).xyz, 0.5), float2(2.5, .75));
-				//return p - 0.25 * fbm_4(pos * 2.25 + t);
+				float p = sdTorus(opTwist(mul(rotateY( PI * t), float4(pos, 1.0)).xyz, 1.0), float2(2.5, .75));
+				return p - 0.25 * fbm_4(pos * 2.25 + t);
 
 				float3 torusPoint1 = mul(rotateZ(PI / 4), float4(pos, 1.0)).xyz;
 				torusPoint1 = mul(rotateY(5 * t), float4(torusPoint1, 1.0)).xyz;
@@ -201,8 +202,8 @@ Shader "TeeNik/WaterShader"
 				float t1 = sdSphere(sphere1Point + float3(radius, 0.0, 0.0), curve.y * 0.3) - 0.25 * fbm_4(pos * 2.25 + t) * curve.y;
 				t1 = opU(t1, sdSphere(sphere1Point + float3(-radius, 0.0, 0.0), curve.y * 0.3) - 0.25 * fbm_4(pos * 2.25 + t) * curve.y);
 
-
-				float globe = sdSphere(pos, 2.75 * curve2.x) + fbm_4(pos * 1.5 + t * 1.75);
+				float globeScale = 2.75 * pow(curve2.x, 3);
+				float globe = sdSphere(pos, globeScale) + fbm_4(pos * 1.5 + t * 1.75);
 				//return globe;
 
 				t1 = opU(t1, torus1);
