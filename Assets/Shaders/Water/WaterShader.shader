@@ -163,9 +163,10 @@ Shader "TeeNik/WaterShader"
 			float4 getTimeSequence2()
 			{
 				float t = _Time.y * _TimeScale;
-				float m = 8.0;
-				float x = sm(4.5, 6.0, m, t % m) * (1.0 - sm(7.0, 7.5, m, t % m));
-				float y = sm(1.7, 1.8, m, t % m) * (1.0 - sm(2.2, 2.4, m, t % m)) + sm(2.8, 2.9, m, t % m) * (1.0 - sm(3.4, 3.6, m, t % m)) + sm(4.0, 4.1, m, t % m);
+				float m = 4.0;
+				float x = sm(1.7, 1.8, m, t % m) * (1.0 - sm(2.2, 2.4, m, t % m)) + sm(2.8, 2.9, m, t % m) * (1.0 - sm(3.4, 3.6, m, t % m)) + sm(4.0, 4.1, m, t % m);
+				//float y = max(0.33 * sm(4.5, 6.0, m, t % m) * (1.0 - sm(7.0, 7.5, m, t % m)), sm(7.0, 7.5, m, t % m) * (1.0 - sm(8.5, 8.75, m, t % m)));
+				float y = max(sm(0.5, 1.5, m, t % m) * (1.0 - sm(2.5, 3.0, m, t % m)), 1.5 * sm(2.0, 3.0, m, t % m) * (1.0 - sm(4.0, 4.5, m, t % m)));
 
 				return float4(x, y, 0.0, 0.0);
 			}
@@ -179,13 +180,18 @@ Shader "TeeNik/WaterShader"
 				float4 curve = getTimeSequence();
 				float4 curve2 = getTimeSequence2();
 
-				float octahedron = sdOctahedron(pos, 1.05  * curve2.y) - 0.15 * fbm_4(pos * 2.25 + t);
+				float octahedron = sdOctahedron(pos, 1.05  * curve2.x) - 0.15 * fbm_4(pos * 2.25 + t);
 				//float octahedron = sdOctahedron(mul(rotateX(2 * PI * t), float4(pos, 1.0)).xyz, 2.5) - 0.25 * fbm_4(pos * 2.25 + t);
 				//float octahedron2 = sdOctahedron(mul(rotateY(2 * PI * t), float4(mul(rotateZ(PI / 4 * t), float4(pos, 1.0)).xyz, 1.0)).xyz, 2.5) - 0.25 * fbm_4(pos * 2.25 + t);
 				//return opSmoothUnion(octahedron, octahedron2, 0.5);
 
-				float p = sdTorus(opTwist(mul(rotateY( PI * t), float4(pos, 1.0)).xyz, 1.0), float2(2.5, .75));
-				return p - 0.25 * fbm_4(pos * 2.25 + t);
+				//float p = sdTorus(opTwist(mul(rotateY( PI * t), float4(pos, 1.0)).xyz, 1.0), float2(2.5, .75));
+				//return p - 0.25 * fbm_4(pos * 2.25 + t);
+
+				//float sphere = sdSphere(pos, 1.75) + fbm_4s(pos * 1.0 + t * 0.75);
+				//sphere = smin(sphere, sdSphere(pos + float3(1.8, 0.0, 0.0), 0.2), 2.0);
+				//sphere = smin(sphere, sdSphere(pos + float3(-1.8, 0.0, -1.0), 0.2), 2.0);
+				//return sphere;
 
 				float3 torusPoint1 = mul(rotateZ(PI / 4), float4(pos, 1.0)).xyz;
 				torusPoint1 = mul(rotateY(5 * t), float4(torusPoint1, 1.0)).xyz;
@@ -202,9 +208,17 @@ Shader "TeeNik/WaterShader"
 				float t1 = sdSphere(sphere1Point + float3(radius, 0.0, 0.0), curve.y * 0.3) - 0.25 * fbm_4(pos * 2.25 + t) * curve.y;
 				t1 = opU(t1, sdSphere(sphere1Point + float3(-radius, 0.0, 0.0), curve.y * 0.3) - 0.25 * fbm_4(pos * 2.25 + t) * curve.y);
 
-				float globeScale = 2.75 * pow(curve2.x, 3);
-				float globe = sdSphere(pos, globeScale) + fbm_4(pos * 1.5 + t * 1.75);
-				//return globe;
+				float globeScale = 3.75 * pow(curve2.y, 3);
+				float noisePower = 1.5 * pow(curve2.y / 1.5, 2);
+				float3 globePos = mul(rotateX(2 * PI * t), float4(pos, 1.0)).xyz;
+				float globe = sdSphere(globePos, globeScale) + fbm_4(pos * noisePower + t * 5.0);
+
+				if (length(_WorldSpaceCameraPos - float3(0.0, 0.0, 0.0)) < globeScale)
+				{
+					return 1.0;
+				}
+
+				return globe;
 
 				t1 = opU(t1, torus1);
 				t1 = opU(t1, torus2);
@@ -411,11 +425,12 @@ Shader "TeeNik/WaterShader"
 				//color = normal;
 
 				// refracted ray-march into the inside area
-				color *= raymarching2(currPos, refract(rd, normal, 0.85), color, depth);
+				fixed4 rm2 = raymarching2(currPos, refract(rd, normal, 0.85), color, depth);
+				color *= rm2;
 
 				color *= float3(lerp(0.8, 1.0, ao), lerp(0.8, 1.0, ao), lerp(0.8, 1.0, ao));
 
-				return float4(1.0 - color, 0.5);
+				return float4(1.0 - color, max(0.5, rm2.w));
 			}
 
 			fixed4 raymarching(float3 ro, float3 rd, float depth, inout float3 outPos)
