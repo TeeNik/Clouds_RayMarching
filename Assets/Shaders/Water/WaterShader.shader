@@ -376,7 +376,7 @@ Shader "TeeNik/WaterShader"
 
 				color += (n * 0.15);
 
-				return float4(color, 1.0);
+				return float4(1.0 - color, 1.0);
 			}
 
 			fixed4 raymarching2(float3 ro, float3 rd, float3 color, float depth)
@@ -481,8 +481,6 @@ Shader "TeeNik/WaterShader"
 				float3 rayDirection = normalize(i.ray.xyz);
 				float3 rayOrigin = _WorldSpaceCameraPos;
 				float3 color = float3(0.0, 0.0, 0.0);
-				//raymarching2(rayOrigin, rayDirection, color, depth);
-				//fixed4 result = fixed4(color, 0.5);
 				
 				float3 pos = float3(0.0, 0.0, 0.0);
 				fixed4 result = raymarching(rayOrigin, rayDirection, depth, pos);
@@ -491,7 +489,6 @@ Shader "TeeNik/WaterShader"
 				fixed3 back = fixed3(0.6, i.uv.x, 1.0) * 0.5;
 
 				fixed3 col = tex2D(_MainTex, i.uv);
-
 				return fixed4(col * (1.0 - result.w) + result.xyz * result.w, 1.0);
             }
             ENDCG

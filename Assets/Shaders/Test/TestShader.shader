@@ -396,6 +396,18 @@ Shader "TeeNik/TestShader"
 
 				fixed3 col = tex2D(_MainTex, i.uv);
 
+				float t = pow((((1. + sin(_Time.y * 10.) * .5)
+					* .8 + sin(_Time.y * cos(i.uv.y) * 41415.92653) * .0125)
+					* 1.5 + sin(_Time.y * 7.) * .5), 5.);
+
+				float4 c1 = tex2D(_MainTex, i.uv + float2(t * .002, .0));
+				float4 c2 = tex2D(_MainTex, i.uv + float2(t * .005, .0));
+				float4 c3 = tex2D(_MainTex, i.uv + float2(t * .009, .0));
+
+				float noise = hash((hash(i.uv.x) + i.uv.y) * _Time.y) * .055;
+
+				back = fixed3(float3(c3.r, c2.g, c1.b) + noise);
+
 				return fixed4(back * (1.0 - result.w) + result.xyz * result.w, 1.0);
             }
             ENDCG
