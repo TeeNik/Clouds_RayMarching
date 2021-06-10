@@ -35,6 +35,8 @@ public class RaymarchingCamera : SceneViewFilter
 
     public Transform LightPos;
 
+    public RenderTexture LabTexture;
+
     void OnRenderImage(RenderTexture source, RenderTexture destination)
     {
         if (!RaymarchingMaterial)
