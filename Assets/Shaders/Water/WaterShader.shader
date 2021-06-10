@@ -165,15 +165,16 @@ Shader "TeeNik/WaterShader"
 				float t = _Time.y * _TimeScale;
 				float m = 4.0;
 				float x = sm(1.7, 1.8, m, t % m) * (1.0 - sm(2.2, 2.4, m, t % m)) + sm(2.8, 2.9, m, t % m) * (1.0 - sm(3.4, 3.6, m, t % m)) + sm(4.0, 4.1, m, t % m);
-				//float y = max(0.33 * sm(4.5, 6.0, m, t % m) * (1.0 - sm(7.0, 7.5, m, t % m)), sm(7.0, 7.5, m, t % m) * (1.0 - sm(8.5, 8.75, m, t % m)));
 				float y = max(sm(0.5, 1.5, m, t % m) * (1.0 - sm(2.5, 3.0, m, t % m)), 1.5 * sm(2.0, 3.0, m, t % m) * (1.0 - sm(4.0, 4.5, m, t % m)));
 
 				return float4(x, y, 0.0, 0.0);
 			}
 
-
 			float map(float3 pos)
 			{
+				return 1.0;
+
+
 				float t = _Time.y * _TimeScale / 2;
 				float period = max(0, (t % 2) - 1);
 
@@ -282,6 +283,17 @@ Shader "TeeNik/WaterShader"
 				//return sphere;
 			}
 
+			float mapRoom(float3 pos)
+			{
+				//float result = sdPlane(pos, float4(0.0, 1.0, 0.0, 5.0));
+				const float s = 5.0;
+				float result = sdBox(pos, float3(s, 0.2, s));
+				result = opU(result, sdBox(pos - float3(s, s, 0.0), float3(0.2,s, s)));
+				result = opU(result, sdBox(pos - float3(0.0, s, s), float3(s, s, 0.2)));
+
+				return result;
+			}
+
 			float3 getNormal(float3 pos)
 			{
 				const float2 offset = float2(0.001, 0.0);
@@ -299,6 +311,16 @@ Shader "TeeNik/WaterShader"
 					map2(pos + offset.xyy) - map2(pos - offset.xyy),
 					map2(pos + offset.yxy) - map2(pos - offset.yxy),
 					map2(pos + offset.yyx) - map2(pos - offset.yyx));
+				return normalize(normal);
+			}
+
+			float3 getNormalRoom(float3 pos)
+			{
+				const float2 offset = float2(0.001, 0.0);
+				float3 normal = float3(
+					mapRoom(pos + offset.xyy) - mapRoom(pos - offset.xyy),
+					mapRoom(pos + offset.yxy) - mapRoom(pos - offset.yxy),
+					mapRoom(pos + offset.yyx) - mapRoom(pos - offset.yyx));
 				return normalize(normal);
 			}
 
@@ -376,7 +398,17 @@ Shader "TeeNik/WaterShader"
 
 				color += (n * 0.15);
 
-				return float4(1.0 - color, 1.0);
+				return float4(color, 1.0);
+			}
+
+			float4 renderColorRoom(float3 ro, float3 rd, float3 currPos)
+			{
+				float3 normal = getNormalRoom(currPos);
+				float3 light = (_LightColor * dot(_WorldSpaceLightPos0, normal) * 0.5 + 0.5) * _LightIntensity;
+				float shadowVal = softShadow(currPos, _WorldSpaceLightPos0, _ShadowDistance.x, _ShadowDistance.y, _ShadowPenumbra) * 0.5 + 0.5;
+				shadowVal = max(0.0, pow(shadowVal, _ShadowIntensity));
+				float3 color = float3(0.75, 0.75, 0.75) * light * shadowVal;
+				return float4(color, 1.0);
 			}
 
 			fixed4 raymarching2(float3 ro, float3 rd, float3 color, float depth)
@@ -433,7 +465,7 @@ Shader "TeeNik/WaterShader"
 				return float4(1.0 - color, max(0.5, rm2.w));
 			}
 
-			fixed4 raymarching(float3 ro, float3 rd, float depth, inout float3 outPos)
+			fixed4 raymarchingBackground(float3 ro, float3 rd, float depth)
 			{
 				fixed4 result = fixed4(1, 1, 1, 0.0);
 				float t = 0;
@@ -448,7 +480,33 @@ Shader "TeeNik/WaterShader"
 					}
 
 					float3 pos = ro + rd * t;
-					outPos = pos;
+					float dist = mapRoom(pos);
+					if (dist < _Accuracy) //hit
+					{
+						float4 shading = renderColorRoom(ro, rd, pos);
+						result = fixed4(shading.xyz, shading.w);
+						break;
+					}
+					t += dist;
+				}
+				return result;
+			}
+
+			fixed4 raymarching(float3 ro, float3 rd, float depth)
+			{
+				fixed4 result = fixed4(1, 1, 1, 0.0);
+				float t = 0;
+
+				for (int i = 0; i < _MaxIterations; ++i)
+				{
+					if (t > _MaxDistance || t >= depth)
+					{
+						//environment
+						result = fixed4(rd, 0);
+						break;
+					}
+
+					float3 pos = ro + rd * t;
 					float dist = min(map(pos), map2(pos));
 					if (dist < _Accuracy) //hit
 					{
@@ -460,7 +518,7 @@ Shader "TeeNik/WaterShader"
 						}
 						else 
 						{
-							float4 shading = renderColor2(ro, rd, float3(1,1,1), pos);
+							float4 shading = renderColor2(ro, rd, float3(1, 1, 1), pos);
 							result = fixed4(shading.xyz, shading.w);
 							break;
 						}
@@ -482,13 +540,14 @@ Shader "TeeNik/WaterShader"
 				float3 rayOrigin = _WorldSpaceCameraPos;
 				float3 color = float3(0.0, 0.0, 0.0);
 				
-				float3 pos = float3(0.0, 0.0, 0.0);
-				fixed4 result = raymarching(rayOrigin, rayDirection, depth, pos);
+				fixed4 result = raymarching(rayOrigin, rayDirection, depth);
 				//fixed3 col = tex2D(_MainTex, i.uv + (result.r / 5) * result.w);
 
 				fixed3 back = fixed3(0.6, i.uv.x, 1.0) * 0.5;
 
-				fixed3 col = tex2D(_MainTex, i.uv);
+				//fixed3 col = tex2D(_MainTex, i.uv);
+				fixed4 col = raymarchingBackground(rayOrigin, rayDirection, depth);
+
 				return fixed4(col * (1.0 - result.w) + result.xyz * result.w, 1.0);
             }
             ENDCG
