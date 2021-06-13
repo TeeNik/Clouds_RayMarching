@@ -149,7 +149,7 @@ Shader "TeeNik/WaterShader"
 			{
 				float t = _Time.y * _TimeScale;
 				
-				float m = 8.0;
+				float m = 9.0;
 
 				float x = sm(1.0, 2.0, m, t % m);
 				float y = sm(1.0, 1.5, m, t % m) * (1.0 - sm(1.75, 1.95, m, t % m));
@@ -163,18 +163,15 @@ Shader "TeeNik/WaterShader"
 			float4 getTimeSequence2()
 			{
 				float t = _Time.y * _TimeScale;
-				float m = 4.0;
+				float m = 9.0;
 				float x = sm(1.7, 1.8, m, t % m) * (1.0 - sm(2.2, 2.4, m, t % m)) + sm(2.8, 2.9, m, t % m) * (1.0 - sm(3.4, 3.6, m, t % m)) + sm(4.0, 4.1, m, t % m);
-				float y = max(sm(0.5, 1.5, m, t % m) * (1.0 - sm(2.5, 3.0, m, t % m)), 1.5 * sm(2.0, 3.0, m, t % m) * (1.0 - sm(4.0, 4.5, m, t % m)));
+				float y = max(sm(4.5, 5.5, m, t % m) * (1.0 - sm(6.5, 7.0, m, t % m)), 1.5 * sm(6.0, 39.0, m, t % m) * (1.0 - sm(8.0, 8.5, m, t % m)));
 
 				return float4(x, y, 0.0, 0.0);
 			}
 
 			float map(float3 pos)
 			{
-				return 1.0;
-
-
 				float t = _Time.y * _TimeScale / 2;
 				float period = max(0, (t % 2) - 1);
 
@@ -219,8 +216,6 @@ Shader "TeeNik/WaterShader"
 					return 1.0;
 				}
 
-				return globe;
-
 				t1 = opU(t1, torus1);
 				t1 = opU(t1, torus2);
 				t1 = opU(t1, globe);
@@ -262,34 +257,20 @@ Shader "TeeNik/WaterShader"
 				float octahedron = sdOctahedron(pos, 1.0);
 
 				float value = clamp(sin(t), 0.0, 1.0);
-				//float t1 = sphere * value + octahedron * (1.0 - value);
-				float t1 = sphere * 0.0 + octahedron;
-
+				float t1 = octahedron;
 				float3 sphere1Point = mul(rotateY(2 * PI * curve.x), float4(pos, 1.0)).xyz;
-				//float3 sphere1Point = float4(pos, 1.0).xyz;
-
-				t1 = opU(t1, sdSphere(sphere1Point + float3(radius, 0.0, 0.0), 0.2 * (1.0 - curve.y)));
-				t1 = opU(t1, sdSphere(sphere1Point + float3(-radius, 0.0, 0.0), 0.2 * (1.0 - curve.y)));
+				t1 = opU(t1, sdSphere(sphere1Point + float3(radius, 0.0, 0.0), 0.3 * (1.0 - curve.y)));
+				t1 = opU(t1, sdSphere(sphere1Point + float3(-radius, 0.0, 0.0), 0.3 * (1.0 - curve.y)));
 
 				return t1;
-
-				//float sphere = distSphere(pos, 1.0) + noise(pos * 1.2 + vec3(-0.3) + iTime*0.2);
-				//float sphere = sdSphere(pos, 0.45);
-				//
-				//sphere = smin(sphere, sdSphere(pos + float3(-0.4, 0.0, -1.0), 0.04), 5.0);
-				//sphere = smin(sphere, sdSphere(pos + float3(-0.5, -0.75, 0.0), 0.05), 50.0);
-				//sphere = smin(sphere, sdSphere(pos + float3(0.5, 0.7, 0.5), 0.1), 5.0);
-				//
-				//return sphere;
 			}
 
 			float mapRoom(float3 pos)
 			{
-				//float result = sdPlane(pos, float4(0.0, 1.0, 0.0, 5.0));
-				const float s = 5.0;
-				float result = sdBox(pos, float3(s, 0.2, s));
-				result = opU(result, sdBox(pos - float3(s, s, 0.0), float3(0.2,s, s)));
-				result = opU(result, sdBox(pos - float3(0.0, s, s), float3(s, s, 0.2)));
+				const float s = 20.0;
+				float result = sdBox(pos + float3(0, 5.0, 0.0), float3(s, 0.2, s));
+				result = opU(result, sdBox(pos - float3(s, 0.0, 0.0), float3(0.2,s, s)));
+				result = opU(result, sdBox(pos - float3(0.0, 0.0, s), float3(s, s, 0.2)));
 
 				return result;
 			}
@@ -343,7 +324,8 @@ Shader "TeeNik/WaterShader"
 				float result = 1.0;
 				for (float t = mint; t < maxt;)
 				{
-					float h = map(ro + rd * t);
+					float3 pos = ro + rd * t;
+					float h = min(map(pos), map2(pos));
 					if (h < 0.001)
 					{
 						return 0.0;
@@ -370,21 +352,7 @@ Shader "TeeNik/WaterShader"
 			float4 renderColor2(float3 ro, float3 rd, float3 color, float3 currPos)
 			{
 				float time = _Time.y * _TimeScale;
-				//vec3 lightDir = normalize(vec3(1.0,0.4,0.0));
 				float3 normal = getNormal2(currPos);
-				float3 normal_distorted = getNormal2(currPos + rd * noise(currPos * 2.5 + time * 2.0) * 0.75);
-
-				float ndotl = abs(dot(-rd, normal));
-				float ndotl_distorted = (dot(-rd, normal_distorted)) * 0.5 + 0.5;
-				float rim = pow(1.0 - ndotl, 3.0);
-				float rim_distorted = pow(1.0 - ndotl_distorted, 6.0);
-
-				//color = mix( color, normal*0.5+vec3(0.5), rim_distorted+0.15 );
-				//color = mix( vec3(0.0,0.1,0.6), color, rim*1.5 );
-				color = lerp(refract(normal, rd, 0.5) * 0.5 + float3(0.5, 0.5, 0.5), color, rim);
-				//color = mix( vec3(0.1), color, rim );
-				color += rim * 0.6;
-
 				float3 light = (_LightColor * dot(_WorldSpaceLightPos0, normal) * 0.5 + 0.5) * _LightIntensity;
 				color = float3(0.1, 0.1, 0.1) * light;
 
@@ -408,6 +376,12 @@ Shader "TeeNik/WaterShader"
 				float shadowVal = softShadow(currPos, _WorldSpaceLightPos0, _ShadowDistance.x, _ShadowDistance.y, _ShadowPenumbra) * 0.5 + 0.5;
 				shadowVal = max(0.0, pow(shadowVal, _ShadowIntensity));
 				float3 color = float3(0.75, 0.75, 0.75) * light * shadowVal;
+
+				if (map(currPos) < _Accuracy)
+				{
+
+				}
+
 				return float4(color, 1.0);
 			}
 
@@ -547,6 +521,10 @@ Shader "TeeNik/WaterShader"
 
 				//fixed3 col = tex2D(_MainTex, i.uv);
 				fixed4 col = raymarchingBackground(rayOrigin, rayDirection, depth);
+				if (result.w > 0.0 & result.w < 1.0)
+				{
+					col = tex2D(_MainTex, i.uv);
+				}
 
 				return fixed4(col * (1.0 - result.w) + result.xyz * result.w, 1.0);
             }
