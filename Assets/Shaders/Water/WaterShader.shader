@@ -3,6 +3,8 @@ Shader "TeeNik/WaterShader"
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
+		_ConcreteTexture("ConcreteTexture", 2D) = "white" {}
+
 		_Accuracy("Accuracy", Range(0.001, 0.1)) = 0.01
 		_MaxIterations("MaxIterations", float) = 64
 
@@ -19,7 +21,6 @@ Shader "TeeNik/WaterShader"
 
 		_MarchSize("_MarchSize", float) = 0.05
 		_TimeScale("_TimeScale", Range(0.0, 1.0)) = 1.0
-
     }
     SubShader
     {
@@ -37,6 +38,7 @@ Shader "TeeNik/WaterShader"
 			#include "../DistanceFunctions.cginc"
 
 			sampler2D _MainTex;
+			sampler2D _ConcreteTexture;
 
 			float _Accuracy;
 			int _MaxIterations;
@@ -165,9 +167,16 @@ Shader "TeeNik/WaterShader"
 				float t = _Time.y * _TimeScale;
 				float m = 9.0;
 				float x = sm(1.7, 1.8, m, t % m) * (1.0 - sm(2.2, 2.4, m, t % m)) + sm(2.8, 2.9, m, t % m) * (1.0 - sm(3.4, 3.6, m, t % m)) + sm(4.0, 4.1, m, t % m);
-				float y = max(sm(4.5, 5.5, m, t % m) * (1.0 - sm(6.5, 7.0, m, t % m)), 1.5 * sm(6.0, 39.0, m, t % m) * (1.0 - sm(8.0, 8.5, m, t % m)));
+				float y = max(sm(4.5, 5.5, m, t % m) * (1.0 - sm(6.5, 7.0, m, t % m)), 1.5 * sm(6.0, 7.0, m, t % m) * (1.0 - sm(8.0, 8.5, m, t % m)));
 
 				return float4(x, y, 0.0, 0.0);
+			}
+
+			bool isCameraInsideGlobe()
+			{
+				float4 curve2 = getTimeSequence2();
+				float globeScale = 3.75 * pow(curve2.y, 3);
+				return length(_WorldSpaceCameraPos) < globeScale;
 			}
 
 			float map(float3 pos)
@@ -211,10 +220,12 @@ Shader "TeeNik/WaterShader"
 				float3 globePos = mul(rotateX(2 * PI * t), float4(pos, 1.0)).xyz;
 				float globe = sdSphere(globePos, globeScale) + fbm_4(pos * noisePower + t * 5.0);
 
-				if (length(_WorldSpaceCameraPos - float3(0.0, 0.0, 0.0)) < globeScale)
+				if (isCameraInsideGlobe())
 				{
 					return 1.0;
 				}
+
+				//return globe;
 
 				t1 = opU(t1, torus1);
 				t1 = opU(t1, torus2);
@@ -268,9 +279,15 @@ Shader "TeeNik/WaterShader"
 			float mapRoom(float3 pos)
 			{
 				const float s = 20.0;
-				float result = sdBox(pos + float3(0, 5.0, 0.0), float3(s, 0.2, s));
-				result = opU(result, sdBox(pos - float3(s, 0.0, 0.0), float3(0.2,s, s)));
-				result = opU(result, sdBox(pos - float3(0.0, 0.0, s), float3(s, s, 0.2)));
+				float result = sdBox(pos + float3(0, 5.0, 0.0), float3(s * 2.0, 0.2, s * 2.0));
+
+				float3 wallPoint = mul(rotateY(PI * 0.25), float4(pos - float3(s, 0.0, s * 0.5), 1.0)).xyz;
+				float3 wallPoint2 = mul(rotateY(-PI * 0.25), float4(pos - float3(-s, 0.0, s * 0.5), 1.0)).xyz;
+
+				result = opSmoothUnion(result, sdBox(wallPoint, float3(0.2, s, s)), 1.0);
+				result = opSmoothUnion(result, sdBox(wallPoint2, float3(0.2,s, s)), 1.0);
+				result = opSmoothUnion(result, sdBox(pos - float3(0.0, 0.0, s), float3(s, s, 0.2)), 1.0);
+				//float3 sphere1Point = mul(rotateY(2 * PI * curve.x), float4(pos, 1.0)).xyz;
 
 				return result;
 			}
@@ -371,16 +388,22 @@ Shader "TeeNik/WaterShader"
 
 			float4 renderColorRoom(float3 ro, float3 rd, float3 currPos)
 			{
+				if (isCameraInsideGlobe())
+				{
+					return float4(1.0, 1.0, 1.0, 1.0);
+				}
+
 				float3 normal = getNormalRoom(currPos);
 				float3 light = (_LightColor * dot(_WorldSpaceLightPos0, normal) * 0.5 + 0.5) * _LightIntensity;
 				float shadowVal = softShadow(currPos, _WorldSpaceLightPos0, _ShadowDistance.x, _ShadowDistance.y, _ShadowPenumbra) * 0.5 + 0.5;
 				shadowVal = max(0.0, pow(shadowVal, _ShadowIntensity));
 				float3 color = float3(0.75, 0.75, 0.75) * light * shadowVal;
 
-				if (map(currPos) < _Accuracy)
-				{
-
-				}
+				float textureFreq = 0.025;
+				float3 surfaceCol = tex2Dlod(_ConcreteTexture, float4(textureFreq * currPos, 1.0)).xyz;
+				
+				float concrete = fbm_4(currPos * 0.5) * 0.75 + 0.75;
+				//color *= concrete;
 
 				return float4(color, 1.0);
 			}
@@ -416,9 +439,6 @@ Shader "TeeNik/WaterShader"
 				float3 lightDir = normalize(float3(1.0, 0.4, 0.0));
 				float3 normal = getNormal(currPos);
 				float3 normal_distorted = getNormal(currPos + noise(currPos * 1.5 + float3(0.0, 0.0, sin(time * 0.75))));
-				//float shadowVal = shadow(currPos - rd * 0.01, lightDir);
-				float shadowVal = softShadow(currPos, _WorldSpaceLightPos0, _ShadowDistance.x, _ShadowDistance.y, _ShadowPenumbra) * 0.5 + 0.5;
-				shadowVal = max(0.0, pow(shadowVal, _ShadowIntensity));
 				float ao = ambientOcclusion(currPos - normal * 0.01, normal);
 
 				float ndotl = abs(dot(-rd, normal));
@@ -521,7 +541,7 @@ Shader "TeeNik/WaterShader"
 
 				//fixed3 col = tex2D(_MainTex, i.uv);
 				fixed4 col = raymarchingBackground(rayOrigin, rayDirection, depth);
-				if (result.w > 0.0 & result.w < 1.0)
+				if (result.w > 0.0 & result.w < 1.0 | isCameraInsideGlobe())
 				{
 					col = tex2D(_MainTex, i.uv);
 				}

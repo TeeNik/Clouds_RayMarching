@@ -23,6 +23,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _ConcreteTexture:
+        m_Texture: {fileID: 2800000, guid: d830bf9f97b871f4d8290701add7a078, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _DetailAlbedoMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -66,7 +70,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _AOIntensity: 0.25
-    - _AOIterations: 3
+    - _AOIterations: 0
     - _AOStepsize: 0.2
     - _Accuracy: 0.001
     - _BumpScale: 1
