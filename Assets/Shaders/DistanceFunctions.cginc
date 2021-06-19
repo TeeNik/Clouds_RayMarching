@@ -68,6 +68,12 @@ float sdOctahedron(float3 p, float s)
 	return length(float3(q.x, q.y - s + k, q.z - k));
 }
 
+float sdOctahedronBound(float3 p, float s)
+{
+	p = abs(p);
+	return (p.x + p.y + p.z - s) * 0.57735027;
+}
+
 float sdCappedCylinder(float3 p, float r, float h)
 {
 	float2 d = abs(float2(length(p.xy), p.z)) - float2(h, r);

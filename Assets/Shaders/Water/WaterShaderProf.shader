@@ -484,7 +484,6 @@ Shader "TeeNik/WaterShaderProf"
 							result = fixed4(shading.xyz, shading.w);
 							break;
 						}
-
 					}
 
 					t += dist;
