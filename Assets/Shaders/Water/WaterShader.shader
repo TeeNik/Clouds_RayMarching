@@ -194,6 +194,12 @@ Shader "TeeNik/WaterShader"
 				float4 curve = getTimeSequence();
 				float4 curve2 = getTimeSequence2();
 
+				//float3 rt = mul(rotateY(10 * t), float4(pos, 1.0)).xyz;
+				//rt = mul(rotateX(PI * 0.25), float4(rt, 1.0)).xyz;
+				//float3 rt2 = mul(rotateY(-5 * t), float4(pos, 1.0)).xyz;
+				//rt2 = mul(rotateX(-PI * 0.25), float4(rt2, 1.0)).xyz;
+				//return opSmoothUnion(sdTorus(rt, float2(2.0, 0.5)) + 0.7 * fbm_4(rt * 1.25 + t), sdTorus(rt2, float2(3.0, 0.5)) + 0.7 * fbm_4(rt * 1.25 + t), 1.0);
+
 				if (ceil(curve2.x) > 0.0)
 				{
 					float octahedron = sdOctahedron(pos, 1.25 * curve2.x) + 0.15 * fbm_4(pos * 2.25 + t);
