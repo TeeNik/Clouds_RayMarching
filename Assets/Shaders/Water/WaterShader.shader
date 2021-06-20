@@ -205,7 +205,7 @@ Shader "TeeNik/WaterShader"
 					float3 torusPoint1 = mul(rotateZ(PI / 4), float4(pos, 1.0)).xyz;
 					torusPoint1 = mul(rotateY(5 * t), float4(torusPoint1, 1.0)).xyz;
 					float torus1 = sdTorus(torusPoint1, float2(2.0 * sin(PI * curve.z), 0.5)) + 0.7 * fbm_4(torusPoint1 * 1.25 + t);
-					return opU(result, torus1);
+					return opSmoothUnion(result, torus1, 1.0);
 				}
 				
 				if (ceil(curve.w) > 0.0)
@@ -213,7 +213,7 @@ Shader "TeeNik/WaterShader"
 					float3 torusPoint2 = mul(rotateZ(-PI / 4), float4(pos, 1.0)).xyz;
 					torusPoint2 = mul(rotateY(5 * t), float4(torusPoint2, 1.0)).xyz;
 					float torus2 = sdTorus(torusPoint2, float2(2.0 * sin(PI * curve.w), 0.5)) + 0.7 * fbm_4(torusPoint2 * 1.25 + t);
-					return opU(result, torus2);
+					return opSmoothUnion(result, torus2, 1.0);
 				}
 
 				if (ceil(curve.y) > 0.0)
@@ -221,7 +221,8 @@ Shader "TeeNik/WaterShader"
 					float radius = 3.0 * (abs(sin(curve.x * PI / 2 + PI / 2)));
 					float3 sphere1Point = mul(rotateY(2 * PI * curve.x), float4(pos, 1.0)).xyz;
 					float sphere = sdSphere(sphere1Point + float3(radius, 0.0, 0.0), curve.y * 0.45) + 0.25 * fbm_4(pos * 2.25 + t) * curve.y;
-					return opU(result, sdSphere(sphere1Point + float3(-radius, 0.0, 0.0), curve.y * 0.45) + 0.25 * fbm_4(pos * 2.25 + t) * curve.y);
+					result = opU(result, sphere);
+					return opSmoothUnion(result, sdSphere(sphere1Point + float3(-radius, 0.0, 0.0), curve.y * 0.45) + 0.25 * fbm_4(pos * 2.25 + t) * curve.y, 1.0);
 				}
 
 				if (ceil(curve2.y) > 0.0)
@@ -234,37 +235,10 @@ Shader "TeeNik/WaterShader"
 				}
 
 				return result;
-
-				/*
-				float globeScale = 3.0 * pow(curve2.y, 3);
-				float noisePower = 1.5 * pow(curve2.y / 1.5, 2);
-				float3 globePos = mul(rotateX(2 * PI * t), float4(pos, 1.0)).xyz;
-				float globe = sdSphere(globePos, globeScale) + fbm_4(pos * noisePower + t * 5.0);
-
-				t1 = opU(t1, torus1);
-				t1 = opU(t1, torus2);
-
-				return opU(octahedron, globe);
-
-				if (ceil(curve2.y) > 0.0)
-				{
-					//return globe;
-				}
-				//else
-				//{
-				//	return 100.0;
-				//}
-
-				t1 = opU(t1, globe);
-				//return t1;
-				return opSmoothUnion(octahedron, t1, 1.0);
-				*/
 			}
 
 			float map2(float3 pos) 
 			{
-				//return 10.0;
-
 				float t = _Time.y * _TimeScale / 2;
 				float3 curve = getTimeSequence();
 				float radius = 3.0 * (sin(curve.x * PI / 2 + PI / 2));
@@ -277,13 +251,16 @@ Shader "TeeNik/WaterShader"
 				t1 = opU(t1, sdSphere(sphere1Point + float3(-radius, 0.0, 0.0), 0.3 * (1.0 - curve.y)));
 
 
-				float3 circleCenter = float3(0.0, 0.0, -4.0);
-				float octRadius = 4.0;
-				for (int i = -2; i <= 2; ++i)
+				if (isCameraInsideGlobe())
 				{
-					float3 octPoint = float4(pos - (circleCenter + float3(octRadius * sin(PI * 0.25 * i), 0.0, octRadius * cos(PI * 0.25 * i))), 1.0);
-					float octahedron2 = sdOctahedron(octPoint, 1.0);
-					t1 = opU(t1, octahedron2);
+					float3 circleCenter = float3(0.0, 0.0, -4.0);
+					float octRadius = 4.0;
+					for (int i = -2; i <= 2; ++i)
+					{
+						float3 octPoint = float4(pos - (circleCenter + float3(octRadius * sin(PI * 0.25 * i), 0.0, octRadius * cos(PI * 0.25 * i))), 1.0);
+						float octahedron2 = sdOctahedron(octPoint, 1.0);
+						t1 = opU(t1, octahedron2);
+					}
 				}
 
 				return t1;
@@ -395,6 +372,11 @@ Shader "TeeNik/WaterShader"
 				n *= n;
 
 				color += (n * 0.15);
+
+				if (isCameraInsideGlobe())
+				{
+					color = 1.0 - color;
+				}
 
 				return float4(color, 1.0);
 			}
