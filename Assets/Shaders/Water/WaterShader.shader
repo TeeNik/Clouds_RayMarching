@@ -543,6 +543,20 @@ Shader "TeeNik/WaterShader"
 					col = tex2D(_MainTex, i.uv);
 				}
 				
+				float2 sc = _ScreenParams.xy;
+				float2 coord = i.uv * sc;
+				float2 uv = 2.5 * (2 * coord - sc) / sc.y;
+				float3 light_color = float3(0.9, 0.65, 0.5);
+				float light = 0.1 / distance(normalize(uv), uv);
+
+				//if (light <= 0.1) {
+				//	return tex2D(_MainTex, i.uv);
+				//}
+
+				return fixed4(normalize(uv), 0.0, 1.0);
+
+				return fixed4(light * light_color, 1.0) * light + tex2D(_MainTex, i.uv) * (1.0 - light);
+
 				return fixed4(col * (1.0 - result.w) + result.xyz * result.w, 1.0);
             }
             ENDCG
