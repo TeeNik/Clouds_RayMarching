@@ -21,6 +21,8 @@ Shader "TeeNik/WaterShader"
 
 		_MarchSize("_MarchSize", float) = 0.05
 		_TimeScale("_TimeScale", Range(0.0, 1.0)) = 1.0
+
+		_WallColor("WallColor", Color) = (1,1,1,1)
     }
     SubShader
     {
@@ -71,6 +73,8 @@ Shader "TeeNik/WaterShader"
 
 			uniform float _MarchSize;
 			uniform float _TimeScale;
+
+			uniform fixed4 _WallColor;
 
             struct appdata
             {
@@ -157,7 +161,7 @@ Shader "TeeNik/WaterShader"
 				float y = sm(1.0, 1.5, m, t % m) * (1.0 - sm(1.75, 1.95, m, t % m));
 
 				float z = sm(2.1, 3.1, m, t % m) * (1.0 - sm(3.1, 3.1, m, t % m));
-				float w = sm(3.25, 4.25, m, t % m) * (1.0 - sm(4.25, 4.25, m, t % m));
+				float w = sm(3.15, 4.15, m, t % m) * (1.0 - sm(4.15, 4.15, m, t % m));
 
 				return float4(x, y, z, w);
 			}
@@ -166,8 +170,11 @@ Shader "TeeNik/WaterShader"
 			{
 				float t = _Time.y * _TimeScale;
 				float m = 9.0;
-				float x = sm(1.7, 1.8, m, t % m) * (1.0 - sm(2.2, 2.4, m, t % m)) + sm(2.8, 2.9, m, t % m) * (1.0 - sm(3.4, 3.6, m, t % m)) + sm(4.0, 4.1, m, t % m) * (1.0 - sm(4.5, 4.6, m, t % m));
-				float y = max(sm(4.5, 5.5, m, t % m) * (1.0 - sm(6.5, 7.0, m, t % m)), 1.5 * sm(6.0, 7.0, m, t % m) * (1.0 - sm(8.0, 8.5, m, t % m)));
+				//float x = sm(1.7, 1.8, m, t % m) * (1.0 - sm(2.2, 2.4, m, t % m)) + sm(2.8, 2.9, m, t % m) * (1.0 - sm(3.4, 3.6, m, t % m)) + sm(4.0, 4.1, m, t % m) * (1.0 - sm(4.5, 4.6, m, t % m));
+				float x = sm(1.7, 1.8, m, t % m) * (1.0 - sm(2.2, 2.4, m, t % m)) + sm(2.8, 2.9, m, t % m) * (1.0 - sm(3.25, 3.45, m, t % m)) + sm(3.8, 3.9, m, t % m) * (1.0 - sm(4.8, 4.9, m, t % m));
+
+				//float y = max(sm(4.5, 5.5, m, t % m) * (1.0 - sm(6.5, 7.0, m, t % m)), 1.5 * sm(6.0, 7.0, m, t % m) * (1.0 - sm(8.0, 8.5, m, t % m)));
+				float y = sm(4.5, 5.5, m, t % m) * (1.0 - sm(6.5, 7.0, m, t % m));
 
 				return float4(x, y, 0.0, 0.0);
 			}
@@ -249,13 +256,13 @@ Shader "TeeNik/WaterShader"
 				float3 curve = getTimeSequence();
 				float radius = 3.0 * (sin(curve.x * PI / 2 + PI / 2));
 				float octahedron = sdOctahedron(pos, 1.0);
+				//octahedron = opS(sdBox(pos, float3(1.0, 0.25, 1.0)), octahedron);
 
 				float value = clamp(sin(t), 0.0, 1.0);
 				float t1 = octahedron;
 				float3 sphere1Point = mul(rotateY(2 * PI * curve.x), float4(pos, 1.0)).xyz;
 				t1 = opU(t1, sdSphere(sphere1Point + float3(radius, 0.0, 0.0), 0.3 * (1.0 - curve.y)));
 				t1 = opU(t1, sdSphere(sphere1Point + float3(-radius, 0.0, 0.0), 0.3 * (1.0 - curve.y)));
-
 
 				if (isCameraInsideGlobe())
 				{
@@ -280,9 +287,9 @@ Shader "TeeNik/WaterShader"
 				float3 wallPoint = mul(rotateY(PI * 0.25), float4(pos - float3(s, 0.0, s * 0.5), 1.0)).xyz;
 				float3 wallPoint2 = mul(rotateY(-PI * 0.25), float4(pos - float3(-s, 0.0, s * 0.5), 1.0)).xyz;
 
-				result = opSmoothUnion(result, sdBox(wallPoint, float3(0.2, s, s)), 1.0);
-				result = opSmoothUnion(result, sdBox(wallPoint2, float3(0.2,s, s)), 1.0);
-				result = opSmoothUnion(result, sdBox(pos - float3(0.0, 0.0, s), float3(s, s, 0.2)), 1.0);
+				result = opSmoothUnion(result, sdBox(wallPoint, float3(0.2, s, s)), 0.5);
+				result = opSmoothUnion(result, sdBox(wallPoint2, float3(0.2,s, s)), 0.5);
+				result = opSmoothUnion(result, sdBox(pos - float3(0.0, 0.0, s), float3(s, s, 0.2)), 0.5);
 				//float3 sphere1Point = mul(rotateY(2 * PI * curve.x), float4(pos, 1.0)).xyz;
 
 				return result;
@@ -398,7 +405,9 @@ Shader "TeeNik/WaterShader"
 				float3 light = (_LightColor * dot(_WorldSpaceLightPos0, normal) * 0.5 + 0.5) * _LightIntensity;
 				float shadowVal = softShadow(currPos, _WorldSpaceLightPos0, _ShadowDistance.x, _ShadowDistance.y, _ShadowPenumbra) * 0.5 + 0.5;
 				shadowVal = max(0.0, pow(shadowVal, _ShadowIntensity));
-				float3 color = float3(0.75, 0.75, 0.75) * light * shadowVal;
+				//float3 color = float3(0.75, 0.75, 0.75) * light * shadowVal;
+
+				float3 color = _WallColor * light * shadowVal;
 
 				float noise = hash((hash(currPos) + currPos) * _Time.z) * .055;
 				//color += noise;
@@ -553,9 +562,9 @@ Shader "TeeNik/WaterShader"
 				//	return tex2D(_MainTex, i.uv);
 				//}
 
-				return fixed4(normalize(uv), 0.0, 1.0);
-
-				return fixed4(light * light_color, 1.0) * light + tex2D(_MainTex, i.uv) * (1.0 - light);
+				//return fixed4(normalize(uv), 0.0, 1.0);
+				//
+				//return fixed4(light * light_color, 1.0) * light + tex2D(_MainTex, i.uv) * (1.0 - light);
 
 				return fixed4(col * (1.0 - result.w) + result.xyz * result.w, 1.0);
             }
