@@ -174,9 +174,9 @@ Shader "TeeNik/WaterShader"
 				float x = sm(1.7, 1.8, m, t % m) * (1.0 - sm(2.2, 2.4, m, t % m)) + sm(2.8, 2.9, m, t % m) * (1.0 - sm(3.25, 3.45, m, t % m)) + sm(3.8, 3.9, m, t % m) * (1.0 - sm(4.8, 4.9, m, t % m));
 
 				//float y = max(sm(4.5, 5.5, m, t % m) * (1.0 - sm(6.5, 7.0, m, t % m)), 1.5 * sm(6.0, 7.0, m, t % m) * (1.0 - sm(8.0, 8.5, m, t % m)));
-				float y = sm(4.5, 5.5, m, t % m) * (1.0 - sm(6.5, 7.0, m, t % m));
-
-				return float4(x, y, 0.0, 0.0);
+				float y = sm(4.0, 5.0, m, t % m) * (1.0 - sm(6.0, 6.5, m, t % m));
+				float z = sm(5.0, 5.0, m, t % m);
+				return float4(x, y, z, 0.0);
 			}
 
 			bool isCameraInsideGlobe()
@@ -195,8 +195,7 @@ Shader "TeeNik/WaterShader"
 					return result;
 				}
 
-				float t = _Time.y * _TimeScale / 2;
-				float period = max(0, (t % 2) - 1);
+				float t = _Time.y * _TimeScale / 2.0;
 
 				float4 curve = getTimeSequence();
 				float4 curve2 = getTimeSequence2();
@@ -250,19 +249,26 @@ Shader "TeeNik/WaterShader"
 				return result;
 			}
 
-			float map2(float3 pos) 
+			float map2(float3 pos, bool checkTime = false) 
 			{
 				float t = _Time.y * _TimeScale / 2;
 				float3 curve = getTimeSequence();
+				float3 curve2 = getTimeSequence2();
 				float radius = 3.0 * (sin(curve.x * PI / 2 + PI / 2));
 				float octahedron = sdOctahedron(pos, 1.0);
 				//octahedron = opS(sdBox(pos, float3(1.0, 0.25, 1.0)), octahedron);
 
-				float value = clamp(sin(t), 0.0, 1.0);
-				float t1 = octahedron;
+				float result = 10000.0;
+
+				if (checkTime & curve2.z >= 1.0)
+				{
+					return result;
+				}
+
+				result = octahedron;
 				float3 sphere1Point = mul(rotateY(2 * PI * curve.x), float4(pos, 1.0)).xyz;
-				t1 = opU(t1, sdSphere(sphere1Point + float3(radius, 0.0, 0.0), 0.3 * (1.0 - curve.y)));
-				t1 = opU(t1, sdSphere(sphere1Point + float3(-radius, 0.0, 0.0), 0.3 * (1.0 - curve.y)));
+				result = opU(result, sdSphere(sphere1Point + float3(radius, 0.0, 0.0), 0.3 * (1.0 - curve.y)));
+				result = opU(result, sdSphere(sphere1Point + float3(-radius, 0.0, 0.0), 0.3 * (1.0 - curve.y)));
 
 				if (isCameraInsideGlobe())
 				{
@@ -272,11 +278,11 @@ Shader "TeeNik/WaterShader"
 					{
 						float3 octPoint = float4(pos - (circleCenter + float3(octRadius * sin(PI * 0.25 * i), 0.0, octRadius * cos(PI * 0.25 * i))), 1.0);
 						float octahedron2 = sdOctahedron(octPoint, 1.0);
-						t1 = opU(t1, octahedron2);
+						result = opU(result, octahedron2);
 					}
 				}
 
-				return t1;
+				return result;
 			}
 
 			float mapRoom(float3 pos)
@@ -345,7 +351,8 @@ Shader "TeeNik/WaterShader"
 				for (float t = mint; t < maxt;)
 				{
 					float3 pos = ro + rd * t;
-					float h = min(map(pos), map2(pos));
+					//float h = min(map(pos), map2(pos, true));
+					float h = map(pos);
 					if (h < 0.001)
 					{
 						return 0.0;
@@ -508,7 +515,7 @@ Shader "TeeNik/WaterShader"
 
 					float3 pos = ro + rd * t;
 					float m = map(pos);
-					float m2 = map2(pos);
+					float m2 = map2(pos, true);
 					float dist = min(m, m2);
 					if (dist < _Accuracy) //hit
 					{
@@ -520,9 +527,12 @@ Shader "TeeNik/WaterShader"
 						}
 						else
 						{
-							float4 shading = renderColor2(ro, rd, float3(1, 1, 1), pos);
-							result = fixed4(shading.xyz, shading.w);
-							break;
+							//if (getTimeSequence2().z < 1.0)
+							{
+								float4 shading = renderColor2(ro, rd, float3(1, 1, 1), pos);
+								result = fixed4(shading.xyz, shading.w);
+								break;
+							}
 						}
 					}
 					t += dist;
