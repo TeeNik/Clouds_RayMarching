@@ -267,8 +267,27 @@ Shader "TeeNik/WaterShader"
 
 				result = octahedron;
 				float3 sphere1Point = mul(rotateY(2 * PI * curve.x), float4(pos, 1.0)).xyz;
-				result = opU(result, sdSphere(sphere1Point + float3(radius, 0.0, 0.0), 0.3 * (1.0 - curve.y)));
-				result = opU(result, sdSphere(sphere1Point + float3(-radius, 0.0, 0.0), 0.3 * (1.0 - curve.y)));
+				//result = opU(result, sdSphere(sphere1Point + float3(radius, 0.0, 0.0), 0.3 * (1.0 - curve.y)));
+				//result = opU(result, sdSphere(sphere1Point + float3(-radius, 0.0, 0.0), 0.3 * (1.0 - curve.y)));
+
+				float4 vs1 = cos(7.5 * t * float4(0.87, 1.13, 1.2, 1.0) + float4(0.0, 3.32, 0.97, 2.85)) * float4(-1.7, 2.1, 2.37, -1.9) * (radius * 0.4);
+				float4 vs2 = cos(7.5 * t * float4(1.07, 0.93, 1.1, 0.81) + float4(0.3, 3.02, 1.15, 2.97)) * float4(1.77, -1.81, 1.47, 1.9) * (radius * 0.4);
+
+				float4 sphere1 = float4(vs1.x, 0.0, vs1.y, 0.3);
+				float4 sphere2 = float4(vs1.z, vs1.w, vs2.z, 0.3);
+				float4 sphere3 = float4(0.0, vs2.x, vs2.y, 0.3);
+				float4 sphere4 = float4(vs2.w, vs2.x, 0.0, 0.3);
+
+				float sp1 = sdSphere(pos - sphere1.xyz, sphere1.w);
+				float sp2 = sdSphere(pos - sphere2.xyz, sphere2.w);
+				float sp3 = sdSphere(pos - sphere3.xyz, sphere3.w);
+				float sp4 = sdSphere(pos - sphere4.xyz, sphere4.w);
+
+				float sp12 = opSmoothUnion(sp1, sp2, 0.5);
+				float sp123 = opSmoothUnion(sp12, sp3, 0.5);
+				float sp1234 = opSmoothUnion(sp123, sp4, 0.5);
+
+				result = opU(result, sp1234);
 
 				if (isCameraInsideGlobe())
 				{
@@ -351,8 +370,7 @@ Shader "TeeNik/WaterShader"
 				for (float t = mint; t < maxt;)
 				{
 					float3 pos = ro + rd * t;
-					//float h = min(map(pos), map2(pos, true));
-					float h = map(pos);
+					float h = min(map(pos), map2(pos, true));
 					if (h < 0.001)
 					{
 						return 0.0;
