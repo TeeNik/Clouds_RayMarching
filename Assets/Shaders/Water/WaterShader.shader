@@ -158,10 +158,10 @@ Shader "TeeNik/WaterShader"
 				float m = 9.0;
 
 				float x = sm(1.0, 2.0, m, t % m);
-				float y = sm(1.0, 1.5, m, t % m) * (1.0 - sm(1.75, 1.95, m, t % m));
+				float y = sm(1.0, 1.5, m, t % m) * (1.0 - sm(1.75, 1.8, m, t % m));
 
 				float z = sm(2.1, 3.1, m, t % m) * (1.0 - sm(3.1, 3.1, m, t % m)); //torus 1
-				float w = sm(3.15, 4.15, m, t % m) * (1.0 - sm(4.15, 4.15, m, t % m)); //torus 2
+				float w = sm(3.1, 4.1, m, t % m) * (1.0 - sm(4.1, 4.1, m, t % m)); //torus 2
 
 				return float4(x, y, z, w);
 			}
@@ -171,12 +171,14 @@ Shader "TeeNik/WaterShader"
 				float t = _Time.y * _TimeScale;
 				float m = 9.0;
 				//octahedron
-				float x = sm(1.7, 1.8, m, t % m) * (1.0 - sm(2.2, 2.4, m, t % m)) + sm(2.8, 2.9, m, t % m) * (1.0 - sm(3.25, 3.45, m, t % m)) + sm(3.8, 3.9, m, t % m) * (1.0 - sm(4.8, 4.9, m, t % m));
+				float x = sm(1.7, 1.8, m, t % m) * (1.0 - sm(2.2, 2.4, m, t % m)) + sm(2.8, 2.9, m, t % m) * (1.0 - sm(3.25, 3.45, m, t % m))
+					+ sm(3.8, 3.9, m, t % m) * (1.0 - sm(4.3, 4.5, m, t % m))
+					+ sm(5.9, 6.0, m, t % m) * (1.0 - sm(7.0, 7.0, m, t % m));
 
-				float y = sm(4.0, 5.0, m, t % m) * (1.0 - sm(6.0, 6.5, m, t % m)); //globe
-				float z = sm(5.0, 5.0, m, t % m); //hiding octahedron
+				float y = sm(6.0, 6.5, m, t % m) * (1.0 - sm(7.7, 8.0, m, t % m)); //globe
+				float z = sm(7.2, 7.2, m, t % m); //hiding octahedron
 				
-				float w = sm(4.2, 5.2, m, t % m) * (1.0 - sm(5.2, 5.2, m, t % m)); //double torus
+				float w = sm(4.2, 6.2, m, t % m) * (1.0 - sm(6.2, 6.2, m, t % m)); //double torus
 				
 				return float4(x, y, z, w);
 			}
@@ -214,17 +216,18 @@ Shader "TeeNik/WaterShader"
 					result = opU(result, octahedron);
 				}
 
-				//{
-				//	float3 tp = mul(rotateX(-PI / 4 * t), float4(pos, 1.0)).xyz;
-				//	tp = mul(rotateZ(5 * t), float4(tp, 1.0)).xyz;
-				//	float torus = sdTorus(tp, float2(2.5 * sin(PI * curve.w), 0.5)) + 0.7 * fbm_4(tp * 1.25 + t);
-				//
-				//	float3 tp2 = mul(rotateX(PI / 4 * t), float4(pos, 1.0)).xyz;
-				//	tp2 = mul(rotateZ(-5 * t), float4(tp2, 1.0)).xyz;
-				//	float torus2 = sdTorus(tp2, float2(3.25 * sin(PI * curve.w), 0.5)) + 0.7 * fbm_4(tp2 * 1.25 + t);
-				//
-				//	return opSmoothUnion(result, opSmoothUnion(torus, torus2, 1.0), 1.0);
-				//}
+				if (ceil(curve2.w > 0.0))
+				{
+					float3 tp = mul(rotateX(-PI / 4 * t), float4(pos, 1.0)).xyz;
+					tp = mul(rotateZ(5 * t), float4(tp, 1.0)).xyz;
+					float torus = sdTorus(tp, float2(2.5 * sin(PI * curve2.w), 0.5)) + 0.7 * fbm_4(tp * 1.25 + t);
+				
+					float3 tp2 = mul(rotateX(PI / 4 * t), float4(pos, 1.0)).xyz;
+					tp2 = mul(rotateZ(-5 * t), float4(tp2, 1.0)).xyz;
+					float torus2 = sdTorus(tp2, float2(3.25 * sin(PI * curve2.w), 0.5)) + 0.7 * fbm_4(tp2 * 1.25 + t);
+				
+					return opSmoothUnion(result, opSmoothUnion(torus, torus2, 1.0), 1.0);
+				}
 
 				if (ceil(curve.z) > 0.0)
 				{
