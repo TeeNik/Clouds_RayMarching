@@ -160,8 +160,8 @@ Shader "TeeNik/WaterShader"
 				float x = sm(1.0, 2.0, m, t % m);
 				float y = sm(1.0, 1.5, m, t % m) * (1.0 - sm(1.75, 1.95, m, t % m));
 
-				float z = sm(2.1, 3.1, m, t % m) * (1.0 - sm(3.1, 3.1, m, t % m));
-				float w = sm(3.15, 4.15, m, t % m) * (1.0 - sm(4.15, 4.15, m, t % m));
+				float z = sm(2.1, 3.1, m, t % m) * (1.0 - sm(3.1, 3.1, m, t % m)); //torus 1
+				float w = sm(3.15, 4.15, m, t % m) * (1.0 - sm(4.15, 4.15, m, t % m)); //torus 2
 
 				return float4(x, y, z, w);
 			}
@@ -170,13 +170,15 @@ Shader "TeeNik/WaterShader"
 			{
 				float t = _Time.y * _TimeScale;
 				float m = 9.0;
-				//float x = sm(1.7, 1.8, m, t % m) * (1.0 - sm(2.2, 2.4, m, t % m)) + sm(2.8, 2.9, m, t % m) * (1.0 - sm(3.4, 3.6, m, t % m)) + sm(4.0, 4.1, m, t % m) * (1.0 - sm(4.5, 4.6, m, t % m));
+				//octahedron
 				float x = sm(1.7, 1.8, m, t % m) * (1.0 - sm(2.2, 2.4, m, t % m)) + sm(2.8, 2.9, m, t % m) * (1.0 - sm(3.25, 3.45, m, t % m)) + sm(3.8, 3.9, m, t % m) * (1.0 - sm(4.8, 4.9, m, t % m));
 
-				//float y = max(sm(4.5, 5.5, m, t % m) * (1.0 - sm(6.5, 7.0, m, t % m)), 1.5 * sm(6.0, 7.0, m, t % m) * (1.0 - sm(8.0, 8.5, m, t % m)));
-				float y = sm(4.0, 5.0, m, t % m) * (1.0 - sm(6.0, 6.5, m, t % m));
-				float z = sm(5.0, 5.0, m, t % m);
-				return float4(x, y, z, 0.0);
+				float y = sm(4.0, 5.0, m, t % m) * (1.0 - sm(6.0, 6.5, m, t % m)); //globe
+				float z = sm(5.0, 5.0, m, t % m); //hiding octahedron
+				
+				float w = sm(4.2, 5.2, m, t % m) * (1.0 - sm(5.2, 5.2, m, t % m)); //double torus
+				
+				return float4(x, y, z, w);
 			}
 
 			bool isCameraInsideGlobe()
@@ -208,9 +210,21 @@ Shader "TeeNik/WaterShader"
 
 				if (ceil(curve2.x) > 0.0)
 				{
-					float octahedron = sdOctahedron(pos, 1.25 * curve2.x) + 0.15 * fbm_4(pos * 2.25 + t);
+					float octahedron = sdOctahedron(pos, 1.5 * curve2.x) + 0.15 * fbm_4(pos * 2.25 + t);
 					result = opU(result, octahedron);
 				}
+
+				//{
+				//	float3 tp = mul(rotateX(-PI / 4 * t), float4(pos, 1.0)).xyz;
+				//	tp = mul(rotateZ(5 * t), float4(tp, 1.0)).xyz;
+				//	float torus = sdTorus(tp, float2(2.5 * sin(PI * curve.w), 0.5)) + 0.7 * fbm_4(tp * 1.25 + t);
+				//
+				//	float3 tp2 = mul(rotateX(PI / 4 * t), float4(pos, 1.0)).xyz;
+				//	tp2 = mul(rotateZ(-5 * t), float4(tp2, 1.0)).xyz;
+				//	float torus2 = sdTorus(tp2, float2(3.25 * sin(PI * curve.w), 0.5)) + 0.7 * fbm_4(tp2 * 1.25 + t);
+				//
+				//	return opSmoothUnion(result, opSmoothUnion(torus, torus2, 1.0), 1.0);
+				//}
 
 				if (ceil(curve.z) > 0.0)
 				{
@@ -231,10 +245,32 @@ Shader "TeeNik/WaterShader"
 				if (ceil(curve.y) > 0.0)
 				{
 					float radius = 3.0 * (abs(sin(curve.x * PI / 2 + PI / 2)));
-					float3 sphere1Point = mul(rotateY(2 * PI * curve.x), float4(pos, 1.0)).xyz;
-					float sphere = sdSphere(sphere1Point + float3(radius, 0.0, 0.0), curve.y * 0.45) + 0.25 * fbm_4(pos * 2.25 + t) * curve.y;
-					result = opU(result, sphere);
-					return opSmoothUnion(result, sdSphere(sphere1Point + float3(-radius, 0.0, 0.0), curve.y * 0.45) + 0.25 * fbm_4(pos * 2.25 + t) * curve.y, 1.0);
+
+					float4 vs1 = cos(7.5 * t * float4(0.87, 1.13, 1.2, 1.0) + float4(0.0, 3.32, 0.97, 2.85)) * float4(-1.7, 2.1, 2.37, -1.9) * (radius * 0.4);
+					float4 vs2 = cos(7.5 * t * float4(1.07, 0.93, 1.1, 0.81) + float4(0.3, 3.02, 1.15, 2.97)) * float4(1.77, -1.81, 1.47, 1.9) * (radius * 0.4);
+
+					float scale = curve.y * 0.45;
+					float4 sphere1 = float4(vs1.x, 0.0, vs1.y, scale);
+					float4 sphere2 = float4(vs1.z, vs1.w, vs2.z, scale);
+					float4 sphere3 = float4(0.0, vs2.x, vs2.y, scale);
+					float4 sphere4 = float4(vs2.w, vs2.x, 0.0, scale);
+
+					float sp1 = sdSphere(pos - sphere1.xyz, sphere1.w) + 0.25 * fbm_4(pos * 2.25 + t) * curve.y;
+					float sp2 = sdSphere(pos - sphere2.xyz, sphere2.w) + 0.25 * fbm_4(pos * 2.25 + t) * curve.y;
+					float sp3 = sdSphere(pos - sphere3.xyz, sphere3.w) + 0.25 * fbm_4(pos * 2.25 + t) * curve.y;
+					float sp4 = sdSphere(pos - sphere4.xyz, sphere4.w) + 0.25 * fbm_4(pos * 2.25 + t) * curve.y;
+
+					float sp12 = opSmoothUnion(sp1, sp2, 1.0);
+					float sp123 = opSmoothUnion(sp12, sp3, 1.0);
+					float sp1234 = opSmoothUnion(sp123, sp4, 1.0);
+
+					return opSmoothUnion(result, sp1234, 1.0);
+
+					//float radius = 3.0 * (abs(sin(curve.x * PI / 2 + PI / 2)));
+					//float3 sphere1Point = mul(rotateY(2 * PI * curve.x), float4(pos, 1.0)).xyz;
+					//float sphere = sdSphere(sphere1Point + float3(radius, 0.0, 0.0), curve.y * 0.45) + 0.25 * fbm_4(pos * 2.25 + t) * curve.y;
+					//result = opU(result, sphere);
+					//return opSmoothUnion(result, sdSphere(sphere1Point + float3(-radius, 0.0, 0.0), curve.y * 0.45) + 0.25 * fbm_4(pos * 2.25 + t) * curve.y, 1.0);
 				}
 
 				if (ceil(curve2.y) > 0.0)
@@ -273,10 +309,11 @@ Shader "TeeNik/WaterShader"
 				float4 vs1 = cos(7.5 * t * float4(0.87, 1.13, 1.2, 1.0) + float4(0.0, 3.32, 0.97, 2.85)) * float4(-1.7, 2.1, 2.37, -1.9) * (radius * 0.4);
 				float4 vs2 = cos(7.5 * t * float4(1.07, 0.93, 1.1, 0.81) + float4(0.3, 3.02, 1.15, 2.97)) * float4(1.77, -1.81, 1.47, 1.9) * (radius * 0.4);
 
-				float4 sphere1 = float4(vs1.x, 0.0, vs1.y, 0.3);
-				float4 sphere2 = float4(vs1.z, vs1.w, vs2.z, 0.3);
-				float4 sphere3 = float4(0.0, vs2.x, vs2.y, 0.3);
-				float4 sphere4 = float4(vs2.w, vs2.x, 0.0, 0.3);
+				float scale = 0.3 * (1.0 - curve.y);
+				float4 sphere1 = float4(vs1.x, 0.0, vs1.y, scale);
+				float4 sphere2 = float4(vs1.z, vs1.w, vs2.z, scale);
+				float4 sphere3 = float4(0.0, vs2.x, vs2.y, scale);
+				float4 sphere4 = float4(vs2.w, vs2.x, 0.0, scale);
 
 				float sp1 = sdSphere(pos - sphere1.xyz, sphere1.w);
 				float sp2 = sdSphere(pos - sphere2.xyz, sphere2.w);
