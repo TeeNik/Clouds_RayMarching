@@ -175,7 +175,7 @@ Shader "TeeNik/WaterShader"
 					+ sm(3.8, 3.9, m, t % m) * (1.0 - sm(4.3, 4.5, m, t % m))
 					+ sm(5.9, 6.0, m, t % m) * (1.0 - sm(7.0, 7.0, m, t % m));
 
-				float y = sm(6.0, 6.5, m, t % m) * (1.0 - sm(7.7, 8.0, m, t % m)); //globe
+				float y = sm(5.8, 6.8, m, t % m) * (1.0 - sm(7.7, 8.0, m, t % m)); //globe
 				float z = sm(7.2, 7.2, m, t % m); //hiding octahedron
 				
 				float w = sm(4.2, 6.2, m, t % m) * (1.0 - sm(6.2, 6.2, m, t % m)); //double torus
@@ -252,7 +252,7 @@ Shader "TeeNik/WaterShader"
 					float4 vs1 = cos(7.5 * t * float4(0.87, 1.13, 1.2, 1.0) + float4(0.0, 3.32, 0.97, 2.85)) * float4(-1.7, 2.1, 2.37, -1.9) * (radius * 0.4);
 					float4 vs2 = cos(7.5 * t * float4(1.07, 0.93, 1.1, 0.81) + float4(0.3, 3.02, 1.15, 2.97)) * float4(1.77, -1.81, 1.47, 1.9) * (radius * 0.4);
 
-					float scale = curve.y * 0.45;
+					float scale = curve.y * 0.5;
 					float4 sphere1 = float4(vs1.x, 0.0, vs1.y, scale);
 					float4 sphere2 = float4(vs1.z, vs1.w, vs2.z, scale);
 					float4 sphere3 = float4(0.0, vs2.x, vs2.y, scale);
