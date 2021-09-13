@@ -124,76 +124,33 @@ Shader "TeeNik/TestShader"
 						lerp(hash(n + 270.0), hash(n + 271.0), f.x), f.y), f.z);
 			}
 
+			float3 applyFog(float3 ro, float3 rd, in float3 rgb, in float distance)
+			{
+				float a = 0.5;
+				float b = 0.45;
+				float e = 2.72;
+				float fogAmount = (a / b) * pow(e, -ro.y * b) * (1.0 - pow(e, -distance * rd.y * b)) / rd.y;
+				//float fogAmount = 1.0 - pow(1.5, -distance * 0.005);
+				float3  fogColor = _LightColor; // float3(1, 1, 1);
+				return lerp(rgb, fogColor, fogAmount);
+			}
+
 			float map(float3 pos)
 			{
 				float t = _Time.y * _TimeScale;
 
-				float sphere = sdSphere(pos, 2.75) + noise(pos * 1.0 + t * 1.75);
-				//float torus = sdTorus(pos, float2(2.5, 1.0)) + noise(pos * 1.25 + t * 1.75);
-				//
-				//float absSin = abs(sin(t));
-				//float rotAng = PI * abs(sin(t));
-				//float torAng = PI * abs(sin(t * 2));
-				//
-				//float3 octPoint = mul(rotateY(rotAng + PI), float4(pos, 1.0)).xyz;
-				float octahedron = sdOctahedron(pos, 1.0);
-				//
-				//float3 sphere1Point = mul(rotateY(PI/2 + PI * abs(sin(t))), float4(pos, 1.0)).xyz;
-				//float sphere1 = sdSphere(sphere1Point + float3(2.0, 0.0, 0.0), 0.2);
-				//
-				//float cappedTorus = sdCappedTorus(octPoint, float3(sin(torAng / 3), cos(torAng / 3), 1.0), 2.0, 0.5) + 0.5 * noise(pos * 1.0 + t * 1.75);
-				//
-				//float cone = sdRoundCone(pos + float3(3.0, 0.0, 0.0), 0.5, 0.3, 0.2 + 2 * absSin);
-				//return opU(cappedTorus, octahedron);
-				//
-				//return smin(octahedron, cappedTorus, 5.0);
-				//return smin(sphere1, opU(cappedTorus2, cappedTorus), 5.0);
-				//
-				float value = clamp(sin(t), 0.0, 1.0);
-				float t1 = sphere * 1.0 + octahedron * 0.0;
-				
-				t1 = smin(t1, sdSphere(pos + float3(3.0 * cos(t), 0.0, 3.0 * abs(sin(t))), 0.7), 3.0);
-				t1 = smin(t1, sdSphere(pos + float3(-3.0 * cos(t), 0.0, 3.0 * -abs(sin(t))), 0.7), 3.0);
-				
-				return t1;
-				
-				//if (_ModInterval.x > 0 && _ModInterval.y > 0 && _ModInterval.z > 0)
-				//{
-				//	float modX = pMod1(pos.x, _ModInterval.x);
-				//	float modY = pMod1(pos.y, _ModInterval.y);
-				//	float modZ = pMod1(pos.z, _ModInterval.z);
-				//}
-				//
-				float4 vs1 = cos(t * float4(0.87, 1.13, 1.2, 1.0) + float4(0.0, 3.32, 0.97, 2.85)) * float4(-1.7, 2.1, 2.37, -1.9);
-				float4 vs2 = cos(t * float4(1.07, 0.93, 1.1, 0.81) + float4(0.3, 3.02, 1.15, 2.97)) * float4(1.77, -1.81, 1.47, 1.9);
-				
-				float4 sphere1 = float4(vs1.x, 0.0, vs1.y, 2.0);
-				float4 sphere2 = float4(vs1.z, vs1.w, vs2.z, 1.9);
-				float4 sphere3 = float4(vs2.x, vs2.y, vs2.w, 1.8);
-				
-				float sp1 = sdSphere(pos - sphere1.xyz, sphere1.w) + noise(pos * 1.0 + t * 1.75);
-				float sp2 = sdSphere(pos - sphere2.xyz, sphere2.w) + noise(pos * 1.0 + t * 1.75);
-				float sp3 = sdSphere(pos - sphere3.xyz, sphere3.w) + noise(pos * 1.0 + t * 1.25);
-				
-				float sp12 = opSmoothUnion(sp1, sp2, 0.5);
-				float sp123 = opSmoothUnion(sp12, sp3, 0.5);
-				//sp123 = opSmoothUnion(sp123, sphere, 0.5);
-				return sp123;
-			}
+				_ModInterval = float3(12, 1, 12);
+				if (_ModInterval.x > 0 && _ModInterval.y > 0 && _ModInterval.z > 0)
+				{
+					float modX = pMod1(pos.x, _ModInterval.x);
+					//float modY = pMod1(pos.y, _ModInterval.y);
+					float modZ = pMod1(pos.z, _ModInterval.z);
+				}
 
-			float map2(float3 pos) 
-			{
-				float octahedron = sdOctahedron(pos, 1.05);
-				//return octahedron;
-
-				//float sphere = distSphere(pos, 1.0) + noise(pos * 1.2 + vec3(-0.3) + iTime*0.2);
-				float sphere = sdSphere(pos, 0.45);
-
-				sphere = smin(sphere, sdSphere(pos + float3(-0.4, 0.0, -1.0), 0.04), 5.0);
-				sphere = smin(sphere, sdSphere(pos + float3(-0.5, -0.75, 0.0), 0.05), 50.0);
-				sphere = smin(sphere, sdSphere(pos + float3(0.5, 0.7, 0.5), 0.1), 5.0);
-
-				return sphere;
+				float height = 10;
+				float result = sdBox(pos - float3(0, height * 0.5, 0), float3(3, height, 3));
+				result = opU(result, sdBox(pos - float3(0, -0.5 * height, 0), float3(10, 0.5, 10)));
+				return result;
 			}
 
 			float3 getNormal(float3 pos)
@@ -203,16 +160,6 @@ Shader "TeeNik/TestShader"
 					map(pos + offset.xyy) - map(pos - offset.xyy),
 					map(pos + offset.yxy) - map(pos - offset.yxy),
 					map(pos + offset.yyx) - map(pos - offset.yyx));
-				return normalize(normal);
-			}
-
-			float3 getNormal2(float3 pos)
-			{
-				const float2 offset = float2(0.001, 0.0);
-				float3 normal = float3(
-					map2(pos + offset.xyy) - map2(pos - offset.xyy),
-					map2(pos + offset.yxy) - map2(pos - offset.yxy),
-					map2(pos + offset.yyx) - map2(pos - offset.yyx));
 				return normalize(normal);
 			}
 
@@ -259,52 +206,6 @@ Shader "TeeNik/TestShader"
 				return 1 - ao * _AOIntensity;
 			}
 
-			void renderColor2(float3 ro, float3 rd, inout float3 color, float3 currPos)
-			{
-				float time = _Time.y * _TimeScale;
-				//vec3 lightDir = normalize(vec3(1.0,0.4,0.0));
-				float3 normal = getNormal2(currPos);
-				float3 normal_distorted = getNormal2(currPos + rd * noise(currPos * 2.5 + time * 2.0) * 0.75);
-
-				float ndotl = abs(dot(-rd, normal));
-				float ndotl_distorted = (dot(-rd, normal_distorted)) * 0.5 + 0.5;
-				float rim = pow(1.0 - ndotl, 3.0);
-				float rim_distorted = pow(1.0 - ndotl_distorted, 6.0);
-
-				//color = mix( color, normal*0.5+vec3(0.5), rim_distorted+0.15 );
-				//color = mix( vec3(0.0,0.1,0.6), color, rim*1.5 );
-				color = lerp(refract(normal, rd, 0.5) * 0.5 + float3(0.5, 0.5, 0.5), color, rim);
-				//color = mix( vec3(0.1), color, rim );
-				color += rim * 0.6;
-
-				//float3 light = (_LightColor * dot(_WorldSpaceLightPos0, normal) * 0.5 + 0.5) * _LightIntensity;
-				//color = float3(0.2, 0.2, 0.2) * light;
-
-			}
-
-			void raymarching2(float3 ro, float3 rd, inout float3 color, float depth)
-			{
-				float t = 0;
-				for (int i = 0; i < _MaxIterations; ++i)
-				{
-					if (t > _MaxDistance || t >= depth)
-					{
-						//environment
-						break;
-					}
-
-					float3 pos = ro + rd * t;
-					float dist = map2(pos);
-					if (dist < _Accuracy) //hit
-					{
-						renderColor2(ro, rd, color, pos);
-						break;
-					}
-					t += dist;
-				}
-			}
-
-
 			float mapOctahedrons(float3 pos)
 			{
 				float octahedron = sdOctahedron(pos, 0.95);
@@ -321,33 +222,12 @@ Shader "TeeNik/TestShader"
 				float3 color = float3(1.0, 1.0, 1.0);
 				float3 lightDir = normalize(float3(1.0, 0.4, 0.0));
 				float3 normal = getNormal(currPos);
-				float3 normal_distorted = getNormal(currPos + noise(currPos * 1.5 + float3(0.0, 0.0, sin(time * 0.75))));
-				//float shadowVal = shadow(currPos - rd * 0.01, lightDir);
-				float shadowVal = softShadow(currPos, _WorldSpaceLightPos0, _ShadowDistance.x, _ShadowDistance.y, _ShadowPenumbra) * 0.5 + 0.5;
-				shadowVal = max(0.0, pow(shadowVal, _ShadowIntensity));
-				float ao = ambientOcclusion(currPos - normal * 0.01, normal);
-
-				float ndotl = abs(dot(-rd, normal));
-				float ndotl_distorted = abs(dot(-rd, normal_distorted));
-				float rim = pow(1.0 - ndotl, 6.0);
-				float rim_distorted = pow(1.0 - ndotl_distorted, 6.0);
-
-				color = lerp(color, normal * 0.5 + float3(0.5, 0.5, 0.5), rim_distorted + 0.1);
-				color += rim;
-				//color = normal;
-
-				// refracted ray-march into the inside area
-				float3 color2 = float3(0.5, 0.5, 0.5);
-				raymarching2(currPos, refract(rd, normal, 0.85), color, depth);
-				//renderRayMarch2( currPos, rayDirection, color2 );
-
-				//color = color2;
-				//color = normal;
-				//color *= vec3(mix(0.25,1.0,shadowVal));
-
-				color *= float3(lerp(0.8, 1.0, ao), lerp(0.8, 1.0, ao), lerp(0.8, 1.0, ao));
 
 				float3 light = (_LightColor * dot(_WorldSpaceLightPos0, normal) * 0.5 + 0.5) * _LightIntensity;
+				float3 lightPos = float3(0, 20, 0);
+				float attenuation = 1.0 - length(currPos - lightPos) / 100;
+				light *= attenuation;
+
 				color = float3(0.1, 0.1, 0.1) * light;
 
 				return color;
@@ -355,29 +235,33 @@ Shader "TeeNik/TestShader"
 
 			fixed4 raymarching(float3 ro, float3 rd, float depth)
 			{
-				fixed4 result = fixed4(1, 1, 1, 1);
+				fixed4 result = fixed4(0, 0, 0, 1);
 				float t = 0;
+
+				float dst = _MaxDistance;
 
 				for (int i = 0; i < _MaxIterations; ++i)
 				{
 					if (t > _MaxDistance || t >= depth)
 					{
 						//environment
-						result = fixed4(rd, 0);
+						//result = fixed4(rd, 0);
 						break;
 					}
 
 					float3 pos = ro + rd * t;
-					float dist = mapOctahedrons(pos);
+					float dist = map(pos);
 					if (dist < _Accuracy) //hit
 					{
 						float4 shading = float4(renderColor(ro, rd, pos, depth), 0.5);
+						dst = length(pos - ro);
 						result = fixed4(shading.xyz, 1.0);
 						break;
 					}
 					t += dist;
 				}
-
+				result.xyz = applyFog(ro, rd, result.xyz, dst);
+				result.w = 1.0;
 				return result;
 			}
 
@@ -392,7 +276,6 @@ Shader "TeeNik/TestShader"
 				fixed4 result = raymarching(rayOrigin, rayDirection, depth);
 				//fixed3 col = tex2D(_MainTex, i.uv + (result.r / 5) * result.w);
 
-				fixed3 back = fixed3(0.6, i.uv.x, 1.0) * 0.5;
 
 				fixed3 col = tex2D(_MainTex, i.uv);
 
@@ -405,8 +288,7 @@ Shader "TeeNik/TestShader"
 				float4 c3 = tex2D(_MainTex, i.uv + float2(t * .009, .0));
 
 				float noise = hash((hash(i.uv.x) + i.uv.y) * _Time.y) * .055;
-
-				back = fixed3(float3(c3.r, c2.g, c1.b) + noise);
+				fixed3 back = fixed3(1, 1, 1) * 0.0;
 
 				return fixed4(back * (1.0 - result.w) + result.xyz * result.w, 1.0);
             }
