@@ -78,6 +78,7 @@ Material:
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
+    - _FogOffset: -2.09
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
@@ -103,10 +104,12 @@ Material:
     - _TimeScale: 0.25
     - _UVSec: 0
     - _UseUIAlphaClip: 0
+    - _YOffset: 0
     - _ZWrite: 1
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _FogColor: {r: 1, g: 1, b: 1, a: 1}
     - _LightColor: {r: 1, g: 1, b: 1, a: 1}
     - _ShadowDistance: {r: 0.1, g: 20, b: 0, a: 1}
     - _WallColor: {r: 0.5456123, g: 0.61238605, b: 0.6320754, a: 1}
