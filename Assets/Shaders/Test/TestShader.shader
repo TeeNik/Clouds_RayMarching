@@ -137,8 +137,6 @@ Shader "TeeNik/TestShader"
 
 			float map(float3 pos)
 			{
-				float t = _Time.y * _TimeScale;
-
 				_ModInterval = float3(12, 1, 12);
 				if (_ModInterval.x > 0 && _ModInterval.y > 0 && _ModInterval.z > 0)
 				{
@@ -225,7 +223,7 @@ Shader "TeeNik/TestShader"
 
 				float3 light = (_LightColor * dot(_WorldSpaceLightPos0, normal) * 0.5 + 0.5) * _LightIntensity;
 				float3 lightPos = float3(0, 20, 0);
-				float attenuation = 1.0 - length(currPos - lightPos) / 100;
+				float attenuation = 1.0 - length(currPos - lightPos) / 65;
 				light *= attenuation;
 
 				color = float3(0.1, 0.1, 0.1) * light;
