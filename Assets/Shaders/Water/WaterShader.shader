@@ -110,7 +110,6 @@ Shader "TeeNik/WaterShader"
                 return o;
             }
 
-
 			float BeerLambert(float absorptionCoefficient, float distanceTraveled)
 			{
 				return exp(-absorptionCoefficient * distanceTraveled);
@@ -166,8 +165,8 @@ Shader "TeeNik/WaterShader"
 				float x = sm(1.0, 2.0, m, t % m);
 				float y = sm(1.0, 1.5, m, t % m) * (1.0 - sm(1.75, 1.8, m, t % m));
 
-				float z = sm(2.1, 3.1, m, t % m) * (1.0 - sm(3.1, 3.1, m, t % m)); //torus 1
-				float w = sm(3.1, 4.1, m, t % m) * (1.0 - sm(4.1, 4.1, m, t % m)); //torus 2
+				float z = sm(2.1, 2.6, m, t % m) * (1.0 - sm(2.6, 3.1, m, t % m)); //torus 1
+				float w = sm(3.1, 3.6, m, t % m) * (1.0 - sm(3.6, 4.1, m, t % m)); //torus 2
 
 				return float4(x, y, z, w);
 			}
@@ -184,16 +183,9 @@ Shader "TeeNik/WaterShader"
 				float y = sm(5.8, 6.8, m, t % m) * (1.0 - sm(7.7, 8.0, m, t % m)); //globe
 				float z = sm(7.2, 7.2, m, t % m); //hiding octahedron
 				
-				float w = sm(4.2, 6.2, m, t % m) * (1.0 - sm(6.2, 6.2, m, t % m)); //double torus
+				float w = sm(4.2, 5.2, m, t % m) * (1.0 - sm(5.2, 6.2, m, t % m)); //double torus
 				
 				return float4(x, y, z, w);
-			}
-
-			bool isCameraInsideGlobe()
-			{
-				float4 curve2 = getTimeSequence2();
-				float globeScale = 3.75 * pow(curve2.y, 3);
-				return length(_WorldSpaceCameraPos) < globeScale;
 			}
 
 			float map(float3 p)
@@ -201,17 +193,10 @@ Shader "TeeNik/WaterShader"
 				float result = 10000.0;
 				float3 pos = p - _Offset;
 
-
 				float t = _Time.y * _TimeScale / 2.0;
 
 				float4 curve = getTimeSequence();
 				float4 curve2 = getTimeSequence2();
-
-				//float3 rt = mul(rotateY(10 * t), float4(pos, 1.0)).xyz;
-				//rt = mul(rotateX(PI * 0.25), float4(rt, 1.0)).xyz;
-				//float3 rt2 = mul(rotateY(-5 * t), float4(pos, 1.0)).xyz;
-				//rt2 = mul(rotateX(-PI * 0.25), float4(rt2, 1.0)).xyz;
-				//return opSmoothUnion(sdTorus(rt, float2(2.0, 0.5)) + 0.7 * fbm_4(rt * 1.25 + t), sdTorus(rt2, float2(3.0, 0.5)) + 0.7 * fbm_4(rt * 1.25 + t), 1.0);
 
 				if (ceil(curve2.x) > 0.0)
 				{
@@ -223,11 +208,11 @@ Shader "TeeNik/WaterShader"
 				{
 					float3 tp = mul(rotateX(-PI / 4 * t), float4(pos, 1.0)).xyz;
 					tp = mul(rotateZ(5 * t), float4(tp, 1.0)).xyz;
-					float torus = sdTorus(tp, float2(2.5 * sin(PI * curve2.w), 0.5)) + 0.7 * fbm_4(tp * 1.25 + t);
+					float torus = sdTorus(tp, float2(2.5 * curve2.w, 0.5)) + 0.7 * fbm_4(tp * 1.25 + t);
 				
 					float3 tp2 = mul(rotateX(PI / 4 * t), float4(pos, 1.0)).xyz;
 					tp2 = mul(rotateZ(-5 * t), float4(tp2, 1.0)).xyz;
-					float torus2 = sdTorus(tp2, float2(3.25 * sin(PI * curve2.w), 0.5)) + 0.7 * fbm_4(tp2 * 1.25 + t);
+					float torus2 = sdTorus(tp2, float2(3.25 * curve2.w, 0.5)) + 0.7 * fbm_4(tp2 * 1.25 + t);
 				
 					return opSmoothUnion(result, opSmoothUnion(torus, torus2, 1.0), 1.0);
 				}
@@ -236,7 +221,7 @@ Shader "TeeNik/WaterShader"
 				{
 					float3 torusPoint1 = mul(rotateZ(PI / 4), float4(pos, 1.0)).xyz;
 					torusPoint1 = mul(rotateY(5 * t), float4(torusPoint1, 1.0)).xyz;
-					float torus1 = sdTorus(torusPoint1, float2(2.0 * sin(PI * curve.z), 0.5)) + 0.7 * fbm_4(torusPoint1 * 1.25 + t);
+					float torus1 = sdTorus(torusPoint1, float2(2.0 * curve.z, 0.5)) + 0.7 * fbm_4(torusPoint1 * 1.25 + t);
 					return opSmoothUnion(result, torus1, 1.0);
 				}
 				
@@ -244,7 +229,7 @@ Shader "TeeNik/WaterShader"
 				{
 					float3 torusPoint2 = mul(rotateZ(-PI / 4), float4(pos, 1.0)).xyz;
 					torusPoint2 = mul(rotateY(5 * t), float4(torusPoint2, 1.0)).xyz;
-					float torus2 = sdTorus(torusPoint2, float2(2.0 * sin(PI * curve.w), 0.5)) + 0.7 * fbm_4(torusPoint2 * 1.25 + t);
+					float torus2 = sdTorus(torusPoint2, float2(2.0 * curve.w, 0.5)) + 0.7 * fbm_4(torusPoint2 * 1.25 + t);
 					return opSmoothUnion(result, torus2, 1.0);
 				}
 
@@ -328,6 +313,15 @@ Shader "TeeNik/WaterShader"
 				return result;
 			}
 
+			float3 getFogColor()
+			{
+				float4 curve = getTimeSequence();
+				float4 curve2 = getTimeSequence2();
+				float value = max(max(max(curve.z, curve.w), curve2.y), curve2.w);
+				float3 color = lerp(_FogColor, float3(1, 0, 0), value);
+				return color;
+			}
+
 			float3 fog(float3 ro, float3 rd, in float3 rgb, in float distance)
 			{
 				const float a = 0.5;
@@ -336,13 +330,13 @@ Shader "TeeNik/WaterShader"
 				float fogAmount = (a / b) * pow(e, -ro.y * b) * (1.0 - pow(e, -distance * rd.y * b)) / rd.y;
 				float3  fogColor = _FogColor;
 				fogAmount = clamp(0, 1, fogAmount);
-				return lerp(rgb, fogColor, fogAmount);
+				return lerp(rgb, getFogColor(), fogAmount);
 			}
 
 			float mapRoom(float3 pos)
 			{
 				const float s = 20.0;
-				float result = sdBox(pos + float3(0, 5.0, 0.0), float3(s * 2.0, 0.2, s * 2.0));
+				float result = sdBox(pos + float3(0.0, 5.0, 0.0), float3(s * 2.0, 0.2, s * 2.0));
 
 				float3 wallPoint = mul(rotateY(PI * 0.25), float4(pos - float3(s, 0.0, s * 0.5), 1.0)).xyz;
 				float3 wallPoint2 = mul(rotateY(-PI * 0.25), float4(pos - float3(-s, 0.0, s * 0.5), 1.0)).xyz;
@@ -458,21 +452,11 @@ Shader "TeeNik/WaterShader"
 
 				color += (n * 0.15);
 
-				if (isCameraInsideGlobe())
-				{
-					color = 1.0 - color;
-				}
-
 				return float4(color, 1.0);
 			}
 
 			float4 renderColorRoom(float3 ro, float3 rd, float3 currPos)
 			{
-				if (isCameraInsideGlobe())
-				{
-					return float4(1.0, 1.0, 1.0, 1.0);
-				}
-
 				float3 normal = getNormalRoom(currPos);
 				float3 light = (_LightColor * dot(_WorldSpaceLightPos0, normal) * 0.5 + 0.5) * _LightIntensity;
 				float shadowVal = softShadow(currPos, _WorldSpaceLightPos0, _ShadowDistance.x, _ShadowDistance.y, _ShadowPenumbra) * 0.5 + 0.5;
@@ -586,34 +570,33 @@ Shader "TeeNik/WaterShader"
 					}
 
 					float3 pos = ro + rd * t;
-					//float m = map(pos);
-					//float m2 = map2(pos, true);
-					//float dist = min(m, m2);
-					//if (dist < _Accuracy) //hit
-					//{
-					//	if (m < m2)
-					//	{
-					//		float4 shading = renderColor(ro, rd, pos, depth);
-					//		result = fixed4(shading.xyz, shading.w);
-					//		break;
-					//	}
-					//	else
-					//	{
-					//		float4 shading = renderColor2(ro, rd, float3(1, 1, 1), pos);
-					//		result = fixed4(shading.xyz, shading.w);
-					//		break;
-					//	}
-					//}
-
-
-					float dist = map2(pos);
+					float m = map(pos);
+					float m2 = map2(pos, true);
+					float dist = min(m, m2);
 					if (dist < _Accuracy) //hit
 					{
-						float4 shading = renderColor2(ro, rd, float3(1, 1, 1), pos);
-						result = fixed4(shading.xyz, shading.w);
-						break;
+						if (m < m2)
+						{
+							float4 shading = renderColor(ro, rd, pos, depth);
+							result = fixed4(shading.xyz, shading.w);
+							break;
+						}
+						else
+						{
+							float4 shading = renderColor2(ro, rd, float3(1, 1, 1), pos);
+							result = fixed4(shading.xyz, shading.w);
+							break;
+						}
 					}
 
+
+					//float dist = map2(pos);
+					//if (dist < _Accuracy) //hit
+					//{
+					//	float4 shading = renderColor2(ro, rd, float3(1, 1, 1), pos);
+					//	result = fixed4(shading.xyz, shading.w);
+					//	break;
+					//}
 
 					t += dist;
 				}
@@ -632,7 +615,7 @@ Shader "TeeNik/WaterShader"
 				fixed4 result = raymarching(rayOrigin, rayDirection, depth);
 
 				fixed4 col = raymarchingBackground(rayOrigin, rayDirection, depth);
-				if (result.w > 0.0 & result.w < 1.0 | isCameraInsideGlobe())
+				if (result.w > 0.0 & result.w < 1.0)
 				{
 					col = tex2D(_MainTex, i.uv);
 				}
