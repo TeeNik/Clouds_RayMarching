@@ -23,9 +23,10 @@ Shader "TeeNik/WaterShader"
 		_TimeScale("_TimeScale", Range(0.0, 1.0)) = 1.0
 
 		_WallColor("WallColor", Color) = (1,1,1,1)
-
 		_FogColor("FogColor", Color) = (1,1,1,1)
+		_BackgroundColor("BackgroundColor", Color) = (1,1,1,1)
 		_Offset("Offset", Vector) = (0,0,0)
+		_OctohedronColor("OctohedronColor", Color) = (0.1, 0.1, 0.1, 1)
 
     }
     SubShader
@@ -80,7 +81,9 @@ Shader "TeeNik/WaterShader"
 
 			uniform fixed4 _WallColor;
 			uniform fixed4 _FogColor;
+			uniform fixed4 _BackgroundColor;
 			uniform float3 _Offset;
+			uniform fixed4 _OctohedronColor;
 
             struct appdata
             {
@@ -318,7 +321,7 @@ Shader "TeeNik/WaterShader"
 				float4 curve = getTimeSequence();
 				float4 curve2 = getTimeSequence2();
 				float value = max(max(max(curve.z, curve.w), curve2.y), curve2.w);
-				float3 color = lerp(_FogColor, float3(1, 0, 0), value);
+				float3 color = lerp(_FogColor, float3(1, 0, 0), value * value);
 				return color;
 			}
 
@@ -335,28 +338,27 @@ Shader "TeeNik/WaterShader"
 
 			float mapRoom(float3 pos)
 			{
-				const float s = 20.0;
-				float result = sdBox(pos + float3(0.0, 5.0, 0.0), float3(s * 2.0, 0.2, s * 2.0));
-
-				float3 wallPoint = mul(rotateY(PI * 0.25), float4(pos - float3(s, 0.0, s * 0.5), 1.0)).xyz;
-				float3 wallPoint2 = mul(rotateY(-PI * 0.25), float4(pos - float3(-s, 0.0, s * 0.5), 1.0)).xyz;
-
-				result = opSmoothUnion(result, sdBox(wallPoint, float3(0.2, s, s)), 0.5);
-				result = opSmoothUnion(result, sdBox(wallPoint2, float3(0.2,s, s)), 0.5);
-				result = opSmoothUnion(result, sdBox(pos - float3(0.0, 0.0, s), float3(s, s, 0.2)), 0.5);
-				//float3 sphere1Point = mul(rotateY(2 * PI * curve.x), float4(pos, 1.0)).xyz;
-
-				_ModInterval = float3(12, 1, 12);
+				float3 p = pos;
+				_ModInterval = float3(15, 1, 15);
 				if (_ModInterval.x > 0 && _ModInterval.y > 0 && _ModInterval.z > 0)
 				{
-					float modX = pMod1(pos.x, _ModInterval.x);
-					//float modY = pMod1(pos.y, _ModInterval.y);
-					float modZ = pMod1(pos.z, _ModInterval.z);
+					float modX = pMod1(p.x, _ModInterval.x);
+					//float modY = pMod1(p.y, _ModInterval.y);
+					float modZ = pMod1(p.z, _ModInterval.z);
 				}
 
 				float height = 10;
-				result = sdBox(pos - float3(0, height * 0.5, 0), float3(3, height, 3));
-				result = opU(result, sdBox(pos - float3(0, -0.5 * height, 0), float3(10, 0.5, 10)));
+				//float result = 10000;
+				float result = sdBox(p - float3(0, -0.5 * height, 0), float3(10, 0.5, 10));
+				result = opU(result, sdBox(p - float3(0, height * 0.5, 0), float3(3, height, 3)));
+
+				//for (int i = -10; i < 10; ++i)
+				//{
+				//	for (int j = -10; j < 10; ++j)
+				//	{
+				//		result = opU(result, sdBox(p - float3(i * 15, height * 0.5, j * 15), float3(3, height, 3)));
+				//	}
+				//}
 
 				return result;
 			}
@@ -440,11 +442,7 @@ Shader "TeeNik/WaterShader"
 				float time = _Time.y * _TimeScale;
 				float3 normal = getNormal2(currPos);
 				float3 light = (_LightColor * dot(_WorldSpaceLightPos0, normal) * 0.5 + 0.5) * _LightIntensity;
-				color = float3(0.1, 0.1, 0.1) * light;
-
-				float random = noise(currPos);
-				float3 S = normalize(random * 2 - 1);
-				float3 Ns = normalize(lerp(normal, S, 0.5));
+				color = _OctohedronColor * light;
 
 				float n = noise(currPos * 1000 ) * 2 - 1;
 				n *= dot(_WorldSpaceLightPos0, normal) * 0.5 + 0.5;
@@ -469,7 +467,10 @@ Shader "TeeNik/WaterShader"
 
 				float3 color = _WallColor * light * shadowVal;
 				
-				float noise = hash((hash(currPos) + currPos) * _Time.z) * .055;
+				float n = noise(currPos * 1000) * 2 - 1;
+				n *= dot(_WorldSpaceLightPos0, normal) * 0.5 + 0.5;
+				n *= n;
+				color += (n * 0.05);
 				//color += noise;
 
 				return float4(color, 1.0);
@@ -527,7 +528,7 @@ Shader "TeeNik/WaterShader"
 
 			fixed4 raymarchingBackground(float3 ro, float3 rd, float depth)
 			{
-				fixed4 result = fixed4(0, 0, 0, 0.0);
+				fixed4 result = _BackgroundColor;
 				float t = 0;
 				float dst = _MaxDistance;
 
@@ -570,33 +571,33 @@ Shader "TeeNik/WaterShader"
 					}
 
 					float3 pos = ro + rd * t;
-					float m = map(pos);
-					float m2 = map2(pos, true);
-					float dist = min(m, m2);
-					if (dist < _Accuracy) //hit
-					{
-						if (m < m2)
-						{
-							float4 shading = renderColor(ro, rd, pos, depth);
-							result = fixed4(shading.xyz, shading.w);
-							break;
-						}
-						else
-						{
-							float4 shading = renderColor2(ro, rd, float3(1, 1, 1), pos);
-							result = fixed4(shading.xyz, shading.w);
-							break;
-						}
-					}
-
-
-					//float dist = map2(pos);
+					//float m = map(pos);
+					//float m2 = map2(pos, true);
+					//float dist = min(m, m2);
 					//if (dist < _Accuracy) //hit
 					//{
-					//	float4 shading = renderColor2(ro, rd, float3(1, 1, 1), pos);
-					//	result = fixed4(shading.xyz, shading.w);
-					//	break;
+					//	if (m < m2)
+					//	{
+					//		float4 shading = renderColor(ro, rd, pos, depth);
+					//		result = fixed4(shading.xyz, shading.w);
+					//		break;
+					//	}
+					//	else
+					//	{
+					//		float4 shading = renderColor2(ro, rd, float3(1, 1, 1), pos);
+					//		result = fixed4(shading.xyz, shading.w);
+					//		break;
+					//	}
 					//}
+
+
+					float dist = map2(pos);
+					if (dist < _Accuracy) //hit
+					{
+						float4 shading = renderColor2(ro, rd, float3(1, 1, 1), pos);
+						result = fixed4(shading.xyz, shading.w);
+						break;
+					}
 
 					t += dist;
 				}
