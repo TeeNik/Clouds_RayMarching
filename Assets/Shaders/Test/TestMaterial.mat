@@ -85,6 +85,7 @@ Material:
     - _OcclusionStrength: 1
     - _Parallax: 0.02
     - _RandomBorder: 1
+    - _ReflectionIntesity: 0.25
     - _ShadowIntensity: 1
     - _ShadowPenumbra: 3
     - _SmoothnessTextureChannel: 0

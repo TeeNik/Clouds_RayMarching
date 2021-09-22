@@ -20,6 +20,7 @@ Shader "TeeNik/TestShader"
 		_MarchSize("_MarchSize", float) = 0.05
 		_TimeScale("_TimeScale", Range(0.0, 1.0)) = 1.0
 
+		_ReflectionIntesity("ReflectionIntesity", Range(0.0, 1.0)) = 0.5
     }
     SubShader
     {
@@ -70,6 +71,7 @@ Shader "TeeNik/TestShader"
 			uniform float _MarchSize;
 			uniform float _TimeScale;
 
+			uniform float _ReflectionIntesity;
 
             struct appdata
             {
@@ -147,7 +149,7 @@ Shader "TeeNik/TestShader"
 
 				float height = 10;
 				float result = sdBox(pos - float3(0, height * 0.5, 0), float3(3, height, 3));
-				result = opU(result, sdBox(pos - float3(0, -0.5 * height, 0), float3(10, 0.5, 10)));
+				//result = opU(result, sdBox(pos - float3(0, -0.5 * height, 0), float3(10, 0.5, 10)));
 				return result;
 			}
 
@@ -226,14 +228,18 @@ Shader "TeeNik/TestShader"
 				float attenuation = 1.0 - length(currPos - lightPos) / 65;
 				light *= attenuation;
 
-				color = float3(0.1, 0.1, 0.1) * light;
+				float roughness = 0.05;
+				float specPower = 1. / (roughness * roughness);
+				float specStrength = (specPower + 8.) / (4. * 2 * PI);
+
+				color = float3(1, 1, 1) * 0.35 * light;
 
 				return color;
 			}
 
-			fixed4 raymarching(float3 ro, float3 rd, float depth)
+			fixed4 raymarching(float3 ro, float3 rd, float depth, inout float3 pos)
 			{
-				fixed4 result = fixed4(0, 0, 0, 1);
+				fixed4 result = fixed4(0, 0, 0, 0);
 				float t = 0;
 
 				float dst = _MaxDistance;
@@ -247,7 +253,7 @@ Shader "TeeNik/TestShader"
 						break;
 					}
 
-					float3 pos = ro + rd * t;
+					pos = ro + rd * t;
 					float dist = map(pos);
 					if (dist < _Accuracy) //hit
 					{
@@ -258,8 +264,8 @@ Shader "TeeNik/TestShader"
 					}
 					t += dist;
 				}
-				result.xyz = applyFog(ro, rd, result.xyz, dst);
-				result.w = 1.0;
+				//result.xyz = applyFog(ro, rd, result.xyz, dst);
+				//result.w = 1.0;
 				return result;
 			}
 
@@ -271,7 +277,14 @@ Shader "TeeNik/TestShader"
 				float3 rayDirection = normalize(i.ray.xyz);
 				float3 rayOrigin = _WorldSpaceCameraPos;
 				
-				fixed4 result = raymarching(rayOrigin, rayDirection, depth);
+				float3 hitPos;
+				fixed4 result = raymarching(rayOrigin, rayDirection, depth, hitPos);
+				if (result.w > 0.0)
+				{
+					float3 normal = getNormal(hitPos);
+					float3 reflectedDir = normalize(reflect(rayDirection, normal));
+					result += raymarching(hitPos + (reflectedDir * 0.01), reflectedDir, depth, hitPos) * _ReflectionIntesity;
+				}
 				//fixed3 col = tex2D(_MainTex, i.uv + (result.r / 5) * result.w);
 
 
@@ -286,7 +299,7 @@ Shader "TeeNik/TestShader"
 				float4 c3 = tex2D(_MainTex, i.uv + float2(t * .009, .0));
 
 				float noise = hash((hash(i.uv.x) + i.uv.y) * _Time.y) * .055;
-				fixed3 back = fixed3(1, 1, 1) * 0.0;
+				fixed3 back = fixed3(1, 1, 1) * 0.25;
 
 				return fixed4(back * (1.0 - result.w) + result.xyz * result.w, 1.0);
             }
