@@ -63,6 +63,7 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    m_Ints: []
     m_Floats:
     - _AOIntensity: 0.25
     - _AOIterations: 3
@@ -78,7 +79,7 @@ Material:
     - _GlossyReflections: 1
     - _LightIntensity: 1
     - _MarchSize: 0.05
-    - _MaxIterations: 300
+    - _MaxIterations: 1000
     - _Metallic: 0
     - _Mode: 0
     - _OcclusionStrength: 1

@@ -122,21 +122,21 @@ Shader "TeeNik/RaymarchingShader"
 					float modZ = pMod1(pos.z, _ModInterval.z);
 				}
 
-				//float t = _Time.y * _TimeScale;
-				//float4 vs1 = cos(t * float4(0.87, 1.13, 1.2, 1.0) + float4(0.0, 3.32, 0.97, 2.85)) * float4(-1.7, 2.1, 2.37, -1.9);
-				//float4 vs2 = cos(t * float4(1.07, 0.93, 1.1, 0.81) + float4(0.3, 3.02, 1.15, 2.97)) * float4(1.77, -1.81, 1.47, 1.9);
-				//
-				//float4 sphere1 = float4(vs1.x, 0.0, vs1.y, 1.0);
-				//float4 sphere2 = float4(vs1.z, vs1.w, vs2.z, 0.9);
-				//float4 sphere3 = float4(vs2.x, vs2.y, vs2.w, 0.8);
-				//
-				//float sp1 = sdSphere(pos - sphere1.xyz, sphere1.w);
-				//float sp2 = sdSphere(pos - sphere2.xyz, sphere2.w);
-				//float sp3 = sdSphere(pos - sphere3.xyz, sphere3.w);
-				//
-				//float sp12 = opSmoothUnion(sp1, sp2, 0.5);
-				//float sp123 = opSmoothUnion(sp12, sp3, 0.5);
-				//return sp123;
+				float t = _Time.y * _TimeScale;
+				float4 vs1 = cos(t * float4(0.87, 1.13, 1.2, 1.0) + float4(0.0, 3.32, 0.97, 2.85)) * float4(-1.7, 2.1, 2.37, -1.9);
+				float4 vs2 = cos(t * float4(1.07, 0.93, 1.1, 0.81) + float4(0.3, 3.02, 1.15, 2.97)) * float4(1.77, -1.81, 1.47, 1.9);
+				
+				float4 sphere1 = float4(vs1.x, 0.0, vs1.y, 1.0);
+				float4 sphere2 = float4(vs1.z, vs1.w, vs2.z, 0.9);
+				float4 sphere3 = float4(vs2.x, vs2.y, vs2.w, 0.8);
+				
+				float sp1 = sdSphere(pos - sphere1.xyz, sphere1.w);
+				float sp2 = sdSphere(pos - sphere2.xyz, sphere2.w);
+				float sp3 = sdSphere(pos - sphere3.xyz, sphere3.w);
+				
+				float sp12 = opSmoothUnion(sp1, sp2, 0.5);
+				float sp123 = opSmoothUnion(sp12, sp3, 0.5);
+				return sp123;
 				
 				return sdSphere(pos - _Sphere.xyz, _Sphere.w);
 
@@ -221,9 +221,9 @@ Shader "TeeNik/RaymarchingShader"
 				return result;
 			}
 
-			fixed4 raymarching(float3 ro, float3 rd, float depth)
+			fixed4 raymarching(float3 ro, float3 rd, float depth, inout float3 pos)
 			{
-				fixed4 result = fixed4(1, 1, 1, 1);
+				fixed4 result = fixed4(0, 0, 0, 0);
 				float t = 0;
 
 				for (int i = 0; i < _MaxIterations; ++i)
@@ -231,12 +231,12 @@ Shader "TeeNik/RaymarchingShader"
 					if (t > _MaxDistance || t >= depth)
 					{
 						//environment
-						result = fixed4(rd, 0);
-						//result = fixed4(0,0,0,1);
+						//result = fixed4(rd, 0);
+						result = fixed4(0,0,0,0);
 						break;
 					}
 
-					float3 pos = ro + rd * t;
+					pos = ro + rd * t;
 					float dist = map(pos);
 					
 					if (dist < _Accuracy) //hit
@@ -244,7 +244,6 @@ Shader "TeeNik/RaymarchingShader"
 						float3 normal = getNormal(pos);
 						float3 shading = getShading(pos, normal);
 						result = fixed4(shading, 1.0);
-
 						break;
 					}
 
@@ -262,8 +261,16 @@ Shader "TeeNik/RaymarchingShader"
 				fixed3 col = tex2D(_MainTex, i.uv);
 				float3 rayDirection = normalize(i.ray.xyz);
 				float3 rayOrigin = _WorldSpaceCameraPos;
-				fixed4 result = raymarching(rayOrigin, rayDirection, depth);
-				
+
+				float3 hitPos;
+				fixed4 result = raymarching(rayOrigin, rayDirection, depth, hitPos);
+				if (result.w > 0.0)
+				{
+					float3 normal = getNormal(hitPos);
+					float3 reflectedDir = normalize(reflect(rayDirection, normal));
+					result += raymarching(hitPos + (reflectedDir * 0.01), reflectedDir, depth, hitPos);
+				}
+
 				return fixed4(col * (1.0 - result.w) + result.xyz * result.w, 1.0);
             }
             ENDCG
