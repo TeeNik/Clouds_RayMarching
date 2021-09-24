@@ -112,18 +112,62 @@ Shader "TeeNik/PBRShader"
 				return 1.0 / pow(distanceToLight, 1);
 			}
 
-			float hash(float n) { return frac(sin(n) * 753.5453123); }
-			float noise(in float3 x)
-			{
-				float3 p = floor(x);
-				float3 f = frac(x);
-				f = f * f * (3.0 - 2.0 * f);
+			float hash(float p) { p = frac(p * 0.011); p *= p + 7.5; p *= p + p; return frac(p); }
 
-				float n = p.x + p.y * 157.0 + 113.0 * p.z;
-				return lerp(lerp(lerp(hash(n + 0.0), hash(n + 1.0), f.x),
-					lerp(hash(n + 157.0), hash(n + 158.0), f.x), f.y),
-					lerp(lerp(hash(n + 113.0), hash(n + 114.0), f.x),
-						lerp(hash(n + 270.0), hash(n + 271.0), f.x), f.y), f.z);
+			float noise(float3 x) {
+				const float3 step = float3(110, 241, 171);
+				float3 i = floor(x);
+				float3 f = frac(x);
+				float n = dot(i, step);
+				float3 u = f * f * (3.0 - 2.0 * f);
+				return lerp(lerp(lerp(hash(n + dot(step, float3(0, 0, 0))), hash(n + dot(step, float3(1, 0, 0))), u.x),
+					lerp(hash(n + dot(step, float3(0, 1, 0))), hash(n + dot(step, float3(1, 1, 0))), u.x), u.y),
+					lerp(lerp(hash(n + dot(step, float3(0, 0, 1))), hash(n + dot(step, float3(1, 0, 1))), u.x),
+						lerp(hash(n + dot(step, float3(0, 1, 1))), hash(n + dot(step, float3(1, 1, 1))), u.x), u.y), u.z);
+			}
+
+			float fbm(float3 x) {
+				float v = 0.0;
+				float a = 0.5;
+				int NUM_NOISE_OCTAVES = 4;
+				for (int i = 0; i < NUM_NOISE_OCTAVES; ++i) {
+					v += a * noise(x);
+					x = x * 2.0;
+					a *= 0.5;
+				}
+				return v;
+			}
+
+			float3 CalculateHalfVector(in float3 toLight, in float3 toView)
+			{
+				return normalize(toLight + toView);
+			}
+
+			float CalculateNDF(in float3  surfNorm, in float3 halfVector, in float roughness)
+			{
+				float a = (roughness * roughness);
+				float halfAngle = dot(surfNorm, halfVector);
+
+				return (a / (PI * pow((pow(halfAngle, 2.0) * (a - 1.0) + 1.0), 2.0)));
+			}
+
+			float CalculateAttenuation(in float3 surfNorm, in float3 v, in float k)
+			{
+				float d = max(dot(surfNorm, v), 0.0);
+				return (d / ((d * (1.0 - k)) + k));
+			}
+
+			float3 CalculateFresnel(in float3 surfNorm,	in float3 toView, in float3 fresnel0)
+			{
+				float d = max(dot(surfNorm, toView), 0.0);
+				float p = ((-5.55473 * d) - 6.98316) * d;
+
+				return fresnel0 + ((1.0 - fresnel0) * pow(1.0 - d, 5.0));
+			}
+
+			float3 CalculateDiffuse(in float3 albedo)
+			{
+				return (albedo / PI);
 			}
 
 			float3 applyFog(float3 ro, float3 rd, in float3 rgb, in float distance)
@@ -287,19 +331,12 @@ Shader "TeeNik/PBRShader"
 				}
 				//fixed3 col = tex2D(_MainTex, i.uv + (result.r / 5) * result.w);
 
-
 				fixed3 col = tex2D(_MainTex, i.uv);
-
-				float t = pow((((1. + sin(_Time.y * 10.) * .5)
-					* .8 + sin(_Time.y * cos(i.uv.y) * 41415.92653) * .0125)
-					* 1.5 + sin(_Time.y * 7.) * .5), 5.);
-
-				float4 c1 = tex2D(_MainTex, i.uv + float2(t * .002, .0));
-				float4 c2 = tex2D(_MainTex, i.uv + float2(t * .005, .0));
-				float4 c3 = tex2D(_MainTex, i.uv + float2(t * .009, .0));
-
-				float noise = hash((hash(i.uv.x) + i.uv.y) * _Time.y) * .055;
 				fixed3 back = fixed3(1, 1, 1) * 0.25;
+
+				//float n = fbm(float3(i.uv * 10, 0) * 10);
+				//n = smoothstep(0.65, 1.0, n);
+				//return fixed4(n, n, n, 1);
 
 				return fixed4(back * (1.0 - result.w) + result.xyz * result.w, 1.0);
             }
