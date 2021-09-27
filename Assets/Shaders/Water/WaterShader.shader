@@ -349,8 +349,9 @@ Shader "TeeNik/WaterShader"
 
 				float height = 10;
 				//float result = 10000;
-				float result = sdBox(p - float3(0, -0.5 * height, 0), float3(10, 0.5, 10));
-				result = opU(result, sdBox(p - float3(0, height * 0.5, 0), float3(3, height, 3)));
+				//float result = sdBox(p - float3(0, -0.5 * height, 0), float3(10, 0.5, 10));
+				float result = sdBox(p - float3(0, height * 0.5, 0), float3(3, height, 3));
+				result = opU(result, sdBox(p - float3(0, 30 + height * 0.5, 0), float3(3, height, 3)));
 
 				//for (int i = -10; i < 10; ++i)
 				//{
@@ -467,10 +468,12 @@ Shader "TeeNik/WaterShader"
 
 				float3 color = _WallColor * light * shadowVal;
 				
-				float n = noise(currPos * 1000) * 2 - 1;
+				float n = fbm_4(currPos * 2.5);
+				n = smoothstep(0.65, 1.0, n) * 1.5;
 				n *= dot(_WorldSpaceLightPos0, normal) * 0.5 + 0.5;
 				n *= n;
-				color += (n * 0.05);
+				float3 gold = float3(0.83, 0.68, 0.21);
+				color = color * (1 - n) + gold * (n);
 				//color += noise;
 
 				return float4(color, 1.0);
@@ -571,33 +574,33 @@ Shader "TeeNik/WaterShader"
 					}
 
 					float3 pos = ro + rd * t;
-					//float m = map(pos);
-					//float m2 = map2(pos, true);
-					//float dist = min(m, m2);
-					//if (dist < _Accuracy) //hit
-					//{
-					//	if (m < m2)
-					//	{
-					//		float4 shading = renderColor(ro, rd, pos, depth);
-					//		result = fixed4(shading.xyz, shading.w);
-					//		break;
-					//	}
-					//	else
-					//	{
-					//		float4 shading = renderColor2(ro, rd, float3(1, 1, 1), pos);
-					//		result = fixed4(shading.xyz, shading.w);
-					//		break;
-					//	}
-					//}
-
-
-					float dist = map2(pos);
+					float m = map(pos);
+					float m2 = map2(pos, true);
+					float dist = min(m, m2);
 					if (dist < _Accuracy) //hit
 					{
-						float4 shading = renderColor2(ro, rd, float3(1, 1, 1), pos);
-						result = fixed4(shading.xyz, shading.w);
-						break;
+						if (m < m2)
+						{
+							float4 shading = renderColor(ro, rd, pos, depth);
+							result = fixed4(shading.xyz, shading.w);
+							break;
+						}
+						else
+						{
+							float4 shading = renderColor2(ro, rd, float3(1, 1, 1), pos);
+							result = fixed4(shading.xyz, shading.w);
+							break;
+						}
 					}
+
+
+					//float dist = map2(pos);
+					//if (dist < _Accuracy) //hit
+					//{
+					//	float4 shading = renderColor2(ro, rd, float3(1, 1, 1), pos);
+					//	result = fixed4(shading.xyz, shading.w);
+					//	break;
+					//}
 
 					t += dist;
 				}
