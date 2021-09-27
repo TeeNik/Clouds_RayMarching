@@ -115,5 +115,5 @@ Material:
     - _OctohedronColor: {r: 0.6666667, g: 0.6627451, b: 0.6784314, a: 1}
     - _Offset: {r: 0, g: 20.2, b: 0, a: 0}
     - _ShadowDistance: {r: 0.1, g: 20, b: 0, a: 1}
-    - _WallColor: {r: 0.18258522, g: 0.17475079, b: 0.1981132, a: 1}
+    - _WallColor: {r: 0.047169805, g: 0.047169805, b: 0.047169805, a: 1}
   m_BuildTextureStacks: []

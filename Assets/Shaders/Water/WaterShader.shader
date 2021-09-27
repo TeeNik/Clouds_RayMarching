@@ -351,15 +351,7 @@ Shader "TeeNik/WaterShader"
 				//float result = 10000;
 				//float result = sdBox(p - float3(0, -0.5 * height, 0), float3(10, 0.5, 10));
 				float result = sdBox(p - float3(0, height * 0.5, 0), float3(3, height, 3));
-				result = opU(result, sdBox(p - float3(0, 30 + height * 0.5, 0), float3(3, height, 3)));
-
-				//for (int i = -10; i < 10; ++i)
-				//{
-				//	for (int j = -10; j < 10; ++j)
-				//	{
-				//		result = opU(result, sdBox(p - float3(i * 15, height * 0.5, j * 15), float3(3, height, 3)));
-				//	}
-				//}
+				//result = opU(result, sdBox(p - float3(0, 30 + height * 0.5, 0), float3(3, height, 3)));
 
 				return result;
 			}
