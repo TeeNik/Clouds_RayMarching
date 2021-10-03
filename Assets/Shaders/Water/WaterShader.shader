@@ -123,20 +123,6 @@ Shader "TeeNik/WaterShader"
 				return 1.0 / pow(distanceToLight, 1);
 			}
 
-			float hash(float n) { return frac(sin(n) * 753.5453123); }
-			float noise(in float3 x)
-			{
-				float3 p = floor(x);
-				float3 f = frac(x);
-				f = f * f * (3.0 - 2.0 * f);
-
-				float n = p.x + p.y * 157.0 + 113.0 * p.z;
-				return lerp(lerp(lerp(hash(n + 0.0), hash(n + 1.0), f.x),
-					lerp(hash(n + 157.0), hash(n + 158.0), f.x), f.y),
-					lerp(lerp(hash(n + 113.0), hash(n + 114.0), f.x),
-						lerp(hash(n + 270.0), hash(n + 271.0), f.x), f.y), f.z);
-			}
-
 			float fbm_4(in float3 x)
 			{
 				float f = 2.0;
@@ -438,11 +424,20 @@ Shader "TeeNik/WaterShader"
 				float3 light = (_LightColor * dot(_WorldSpaceLightPos0, normal) * 0.5 + 0.5) * _LightIntensity;
 				color = _OctohedronColor * light;
 
-				float n = noise(currPos * 1000 ) * 2 - 1;
-				n *= dot(_WorldSpaceLightPos0, normal) * 0.5 + 0.5;
-				n *= n;
+				//float n = noise(currPos * 1000 ) * 2 - 1;
+				//n *= dot(_WorldSpaceLightPos0, normal) * 0.5 + 0.5;
+				//n *= n;
+				//
+				//color += (n * 0.15);
 
-				color += (n * 0.15);
+				time = _Time.x * _TimeScale * 0.001;
+				float n = pattern(currPos * 2, time);
+				n = smoothstep(0.45, 1.0, n) * 1.5;
+				n *= dot(_WorldSpaceLightPos0, normal) * 0.5 + 0.5;
+				//n *= n;
+
+				float3 gold = float3(232, 185, 32) / 255;
+				color = lerp(color, gold, n);// color* (1 - n) + gold * (n);
 
 				return float4(color, 1.0);
 			}
@@ -461,13 +456,19 @@ Shader "TeeNik/WaterShader"
 
 				float3 color = _WallColor * light * shadowVal;
 				
-				float n = fbm_4(currPos * 2.5);
-				n = smoothstep(0.65, 1.0, n) * 1.5;
+				//float n = fbm_4(currPos * 2.5);
+				//n = smoothstep(0.65, 1.0, n) * 1.5;
+				//n *= dot(_WorldSpaceLightPos0, normal) * 0.5 + 0.5;
+				//n *= n;
+
+				float time = _Time.x * _TimeScale * 0;
+				float n = pattern(currPos, time);
+				n = smoothstep(0.5, 1.0, n) * 1.5;
 				n *= dot(_WorldSpaceLightPos0, normal) * 0.5 + 0.5;
 				n *= n;
-				float3 gold = float3(0.83, 0.68, 0.21);
+
+				float3 gold = float3(232, 185, 32) / 255;
 				color = color * (1 - n) + gold * (n);
-				//color += noise;
 
 				return float4(color, 1.0);
 			}
@@ -522,9 +523,9 @@ Shader "TeeNik/WaterShader"
 				return float4(1.0 - color, max(0.5, rm2.w));
 			}
 
-			fixed4 raymarchingBackground(float3 ro, float3 rd, float depth)
+			fixed4 raymarchingBackground(float3 ro, float3 rd, float depth, float4 backColor)
 			{
-				fixed4 result = _BackgroundColor;
+				fixed4 result = backColor;
 				float t = 0;
 				float dst = _MaxDistance;
 
@@ -567,33 +568,33 @@ Shader "TeeNik/WaterShader"
 					}
 
 					float3 pos = ro + rd * t;
-					float m = map(pos);
-					float m2 = map2(pos, true);
-					float dist = min(m, m2);
-					if (dist < _Accuracy) //hit
-					{
-						if (m < m2)
-						{
-							float4 shading = renderColor(ro, rd, pos, depth);
-							result = fixed4(shading.xyz, shading.w);
-							break;
-						}
-						else
-						{
-							float4 shading = renderColor2(ro, rd, float3(1, 1, 1), pos);
-							result = fixed4(shading.xyz, shading.w);
-							break;
-						}
-					}
-
-
-					//float dist = map2(pos);
+					//float m = map(pos);
+					//float m2 = map2(pos, true);
+					//float dist = min(m, m2);
 					//if (dist < _Accuracy) //hit
 					//{
-					//	float4 shading = renderColor2(ro, rd, float3(1, 1, 1), pos);
-					//	result = fixed4(shading.xyz, shading.w);
-					//	break;
+					//	if (m < m2)
+					//	{
+					//		float4 shading = renderColor(ro, rd, pos, depth);
+					//		result = fixed4(shading.xyz, shading.w);
+					//		break;
+					//	}
+					//	else
+					//	{
+					//		float4 shading = renderColor2(ro, rd, float3(1, 1, 1), pos);
+					//		result = fixed4(shading.xyz, shading.w);
+					//		break;
+					//	}
 					//}
+
+
+					float dist = map2(pos);
+					if (dist < _Accuracy) //hit
+					{
+						float4 shading = renderColor2(ro, rd, float3(1, 1, 1), pos);
+						result = fixed4(shading.xyz, shading.w);
+						break;
+					}
 
 					t += dist;
 				}
@@ -611,7 +612,7 @@ Shader "TeeNik/WaterShader"
 				
 				fixed4 result = raymarching(rayOrigin, rayDirection, depth);
 
-				fixed4 col = raymarchingBackground(rayOrigin, rayDirection, depth);
+				fixed4 col = raymarchingBackground(rayOrigin, rayDirection, depth, _BackgroundColor);
 				if (result.w > 0.0 & result.w < 1.0)
 				{
 					col = tex2D(_MainTex, i.uv);
