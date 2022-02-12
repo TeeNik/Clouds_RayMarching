@@ -43,6 +43,7 @@ Shader "TeeNik/WaterShader"
 
             #include "UnityCG.cginc"
 			#include "../DistanceFunctions.cginc"
+			#include "../NoiseFunctions.cginc"
 
 			sampler2D _MainTex;
 			sampler2D _ConcreteTexture;
