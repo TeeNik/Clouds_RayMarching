@@ -85,7 +85,7 @@ float Perlin3D(float3 P)
 	float final = lerp(res1.x, res1.y, blend.x);
 	final *= 1.1547005383792515290182975610039;		//	(optionally) scale things to a strict -1.0->1.0 range    *= 1.0/sqrt(0.75)
 
-    final = (final + 1.0) * 0.5;
+	final = (final + 1.0) * 0.5;
 
 	return final;
 }
@@ -114,17 +114,17 @@ float PerlinNormal(float3 p, float cutOff, int octaves, float3 offset, float fre
 
 	for (int i = 0; i < octaves; ++i)
 	{
-        float h = Perlin3D((p + offset) * frequency);
+		float h = Perlin3D((p + offset) * frequency);
 
 		sum += h * amplitude;
 		maxAmp += amplitude;
 
-        frequency *= lacunarity;
+		frequency *= lacunarity;
 		amplitude *= persistence;
 	}
 
 	sum = Remap01(sum, 0.0, maxAmp);
 	sum = sum * step(cutOff, sum);
 
-    return sum;
+	return sum;
 }

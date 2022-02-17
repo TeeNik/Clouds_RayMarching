@@ -1,4 +1,29 @@
-﻿float IGN(float2 screenXy)
+﻿#include "Perlin3D.cginc"
+
+struct SphereInfo
+{
+    float3 pos;
+    float radius;
+};
+
+struct PerlinInfo
+{
+    float3 offset;
+    int octaves;
+    float cutOff;
+    float freq;
+    float amp;
+    float lacunarity;
+    float persistence;
+};
+
+struct CloudInfo
+{
+    float density;
+    float absortion;
+};
+
+float IGN(float2 screenXy)
 {
     const float3 magic = float3(0.06711056, 0.00583715, 52.9829189);
 
@@ -46,22 +71,16 @@ float4 march(float3 ro, float3 roJittered, float3 rd, float3 lightDir, SphereInf
     if (!intersectsSphere)
         return float4(0.0, 0.0, 0.0, 0.0);
 
-    // set the number of raymarching steps, we are always taking the same number of samples inside the sphere no matter the distance traveled inside
-    // TODO: if the distance for each step is so small that is insignificant, we could probably get away with one sample...
     const int MarchSteps = 8;
     float distInsideSphere = distance(t1, t2);
     float marchStepSize = distInsideSphere / (float)MarchSteps;
 
-    // Jittering is nowhere near accurate, since intersecting is already offsetting the rays. 
-    // The fact that we will also take the same number of samples inside the sphere no matter what distance we travel inside is also another factor why this jitter is "not correct".
-    // Still, it improves the quality a lot so I apply it anyway...
     float3 jitter = roJittered - ro;
     t1 += jitter * marchStepSize;
 
     float3 lightEnergy = float3(0.0f, 0.0f, 0.0f);
     float transmittance = 1.0;
 
-    // march from the camera
     for (int i = 0; i < MarchSteps; ++i)
     {
         float fromCamSample = PerlinNormal(t1, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset, perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence);
@@ -71,7 +90,6 @@ float4 march(float3 ro, float3 roJittered, float3 rd, float3 lightDir, SphereInf
             float3 t3 = 0.0;
             float3 t4 = 0.0;
 
-            // find the exit point (t4)
             raySphereIntersection(t1, lightDir, s, r, t3, t4);
             float distInsideSphereToLight = distance(t1, t4);
             float marchStepSizeToLight = distInsideSphereToLight / (float)MarchSteps;
@@ -79,7 +97,6 @@ float4 march(float3 ro, float3 roJittered, float3 rd, float3 lightDir, SphereInf
             float3 lightRayPos = t1;
             float accumToLight = 0.0;
 
-            // say goodbye to performance with the help of nested raymarching + perlin octaves :) 
             for (int j = 0; j < MarchSteps; ++j)
             {
                 float toLightSample = PerlinNormal(lightRayPos, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset, perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence);
