@@ -1,6 +1,5 @@
 ﻿#define PI 3.14159265359
 
-
 float Hash(float f)
 {
     return frac(sin(f) * 43758.5453);

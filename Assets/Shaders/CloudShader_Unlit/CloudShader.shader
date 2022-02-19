@@ -1,6 +1,4 @@
-// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
-
-Shader "Custom/CloudRaymarch"
+Shader "Custom/CloudShader"
 {
 	Properties
 	{
@@ -125,6 +123,19 @@ Shader "Custom/CloudRaymarch"
 
 				//float noise = Perlin3D(float3(0.25, 0.25, 0.25));
 				//return half4(noise, noise, noise, 1);
+
+				//float n = 2;
+				//float3 minBound = (-n, -n, -n);
+				//float3 maxBound = (n, n, n);
+				//float t1, t2;
+				//bool intersectsBox = rayBoxDst(minBound, maxBound, ro, 1/rd, t1, t2);
+				//if (intersectsBox)
+				//{
+				//	return half4(1, 1, 1, 1);
+				//}
+				//else {
+				//	return half4(0, 0, 0, 0.25);
+				//}
 
 				return half4(o.rgba);
 			}
