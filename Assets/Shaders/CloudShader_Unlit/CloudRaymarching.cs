@@ -17,11 +17,14 @@ public class CloudRaymarching : MonoBehaviour
     [SerializeField] private Transform sun = null;
     [SerializeField] private PostProcessLayer ppLayer = null;
     [SerializeField] private Transform sphere = null;
+    [SerializeField] private Transform cube = null;
 
     private Material raymarchMat;
 
     private readonly int posId = Shader.PropertyToID("_SpherePos");
     private readonly int radiusId = Shader.PropertyToID("_SphereRadius");
+    private readonly int cubeMinBound = Shader.PropertyToID("_CubeMinBound");
+    private readonly int cubeMaxBound = Shader.PropertyToID("_CubeMaxBound");
     private readonly int coverageId = Shader.PropertyToID("_Coverage");
     private readonly int densityId = Shader.PropertyToID("_Density");
     private readonly int absortionId = Shader.PropertyToID("_Absortion");
@@ -49,6 +52,8 @@ public class CloudRaymarching : MonoBehaviour
     {
         raymarchMat.SetVector(posId, sphere.position);
         raymarchMat.SetFloat(radiusId, sphere.localScale.x * 0.5f);
+        raymarchMat.SetVector(cubeMinBound, cube.position - cube.localScale * 0.5f);
+        raymarchMat.SetVector(cubeMaxBound, cube.position + cube.localScale * 0.5f);
         raymarchMat.SetFloat(coverageId, coverageSlider.value);
         raymarchMat.SetFloat(densityId, densitySlider.value);
         raymarchMat.SetFloat(absortionId, absortionSlider.value);

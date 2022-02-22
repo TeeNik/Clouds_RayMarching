@@ -6,6 +6,12 @@ struct SphereInfo
     float radius;
 };
 
+struct CubeInfo
+{
+    float3 minBound;
+    float3 maxBound;
+};
+
 struct PerlinInfo
 {
     float3 offset;
@@ -67,18 +73,11 @@ bool rayBoxDst(float3 boundsMin, float3 boundsMax, float3 rayOrigin, float3 invR
     return dstA <= dstB;
 }
 
-float4 march(float3 ro, float3 roJittered, float3 rd, float3 lightDir, SphereInfo sphereInfo, PerlinInfo perlinInfo, CloudInfo cloudInfo)
+float4 march(float3 ro, float3 roJittered, float3 rd, float3 lightDir, CubeInfo cubeInfo, PerlinInfo perlinInfo, CloudInfo cloudInfo)
 {
-    float s = sphereInfo.pos;
-    float r = sphereInfo.radius;
-
     float3 t1 = float3(0.0, 0.0, 0.0);
-
-    float n = 2;
-    float3 minBound = (-n, -n, -n);
-    float3 maxBound = (n, n, n);
     float distToBox, distInsideBox;
-    bool intersectsBox = rayBoxDst(minBound, maxBound, ro, 1/rd, distToBox, distInsideBox);
+    bool intersectsBox = rayBoxDst(cubeInfo.minBound, cubeInfo.maxBound, ro, 1/rd, distToBox, distInsideBox);
 
     if (!intersectsBox)
         return float4(0.0, 0.0, 0.0, 0.0);
@@ -102,7 +101,7 @@ float4 march(float3 ro, float3 roJittered, float3 rd, float3 lightDir, SphereInf
             float t2 = 0.0;
             float distInsideSphereToLight = 0.0;
 
-            rayBoxDst(minBound, maxBound, t1, 1/lightDir, t2, distInsideSphereToLight);
+            rayBoxDst(cubeInfo.minBound, cubeInfo.maxBound, t1, 1/lightDir, t2, distInsideSphereToLight);
             float marchStepSizeToLight = distInsideSphereToLight / (float)MarchSteps;
 
             float3 lightRayPos = t1;

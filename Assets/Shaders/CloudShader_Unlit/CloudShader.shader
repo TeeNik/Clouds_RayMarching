@@ -14,6 +14,9 @@ Shader "Custom/CloudShader"
 		[HideInInspector] _SphereRadius("SphereRadius", Float) = 0.5
 		[HideInInspector] _SpherePos("SpherePos", Vector) = (0.0, 0.0, 0.0)
 
+		[HideInInspector] _SpherePos("_CubeMinBound", Vector) = (0.0, 0.0, 0.0)
+		[HideInInspector] _SpherePos("_CubeMaxBound", Vector) = (0.0, 0.0, 0.0)
+
 		[HideInInspector] _JitterEnabled("JitterEnabled", Range(0, 1)) = 1
 		[HideInInspector] _FrameCount("FrameCount", Int) = 0.0
 
@@ -61,6 +64,9 @@ Shader "Custom/CloudShader"
 			float _SphereRadius;
 			float3 _SpherePos;
 
+			float3 _CubeMinBound;
+			float3 _CubeMaxBound;
+
 			int _JitterEnabled;
 			int _FrameCount;
 
@@ -95,7 +101,6 @@ Shader "Custom/CloudShader"
 
 				float roJitter = IGN(i.vertex.xy + frameCount);
 				float3 roJittered = ro + (rd * roJitter * _JitterEnabled);
-				//float3 roJittered = float3(0, 0, 0);
 
 				float3 lightDir = _WorldSpaceLightPos0.xyz;
 
@@ -103,6 +108,11 @@ Shader "Custom/CloudShader"
 				SphereInfo sphereInfo;
 				sphereInfo.pos = _SpherePos;
 				sphereInfo.radius = _SphereRadius;
+
+				//cube
+				CubeInfo cubeInfo;
+				cubeInfo.minBound = _CubeMinBound;
+				cubeInfo.maxBound = _CubeMaxBound;
 
 				// perlin noise
 				PerlinInfo perlinInfo;
@@ -119,24 +129,7 @@ Shader "Custom/CloudShader"
 				cloudInfo.density = _Density;
 				cloudInfo.absortion = _Absortion;
 
-				float4 o = march(ro, roJittered, rd, lightDir, sphereInfo, perlinInfo, cloudInfo);
-
-				//float noise = Perlin3D(float3(0.25, 0.25, 0.25));
-				//return half4(noise, noise, noise, 1);
-
-				//float n = 2;
-				//float3 minBound = (-n, -n, -n);
-				//float3 maxBound = (n, n, n);
-				//float t1, t2;
-				//bool intersectsBox = rayBoxDst(minBound, maxBound, ro, 1/rd, t1, t2);
-				//if (intersectsBox)
-				//{
-				//	return half4(1, 1, 1, 1);
-				//}
-				//else {
-				//	return half4(0, 0, 0, 0.25);
-				//}
-
+				float4 o = march(ro, roJittered, rd, lightDir, cubeInfo, perlinInfo, cloudInfo);
 				return half4(o.rgba);
 			}
 
