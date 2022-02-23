@@ -1,4 +1,6 @@
 ﻿#include "Perlin3D.cginc"
+#include "WorleyNoise.cginc"
+#include "../DistanceFunctions.cginc"
 
 struct SphereInfo
 {
@@ -73,7 +75,47 @@ bool rayBoxDst(float3 boundsMin, float3 boundsMax, float3 rayOrigin, float3 invR
     return dstA <= dstB;
 }
 
-float4 march(float3 ro, float3 roJittered, float3 rd, float3 lightDir, CubeInfo cubeInfo, PerlinInfo perlinInfo, CloudInfo cloudInfo)
+float sampleDensity(float3 pos, PerlinInfo perlinInfo, SphereInfo sphereInfo)
+{
+    float iTime = _Time.y * 1;
+    //float3 fbmCoord = (pos + 2.0 * float3(iTime, 0, iTime)) / 1.5;
+    //float noise = PerlinNormal(pos, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset,
+    //    perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence);
+    //float sdfValue = sdSphere(sphereInfo.pos - pos, sphereInfo.radius) + noise;
+    //sdfValue = opSmoothUnion(sdfValue, sdSphere(sphereInfo.pos - pos - float3(1.0, 3.0 + 2.0 * cos(iTime), 0.5), 0.45), 3.0f);
+    //
+    ////return (1 - WorleyNormal(pos * 0.5, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset,
+    ////    perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence)) * 0.5;
+    //
+    //if (sdfValue < 0.01)
+    //{
+    //    return 0.1;
+    //} 
+    //else {
+    //    return 0.0f;
+    //}
+    //
+    ////float sdfValue = sdSphere(pos - float3(-8.0, 2.0 + 20.0 * sin(iTime), -1), sphereInfo.radius);
+    ////sdfValue = sdSmoothUnion(sdfValue, sdSphere(pos - float3(8.0, 8.0 + 12.0 * cos(iTime), 3), 5.6), 3.0f);
+    ////sdfValue = sdSmoothUnion(sdfValue, sdSphere(pos - float3(5.0 * sin(iTime), 3.0, 0), 8.0), 3.0) + 7.0 * noise;
+    //////sdfValue = sdSmoothUnion(sdfValue, sdPlane(pos + float3(0, 0.4, 0)), 22.0);
+    //
+    ////float sdfValue = sdSphere(pos, float3(5.0 * sin(iTime), 3.0, 0), 8.0) + 7.0 * fbm_4(fbmCoord / 3.2);
+    ////float sphere = sdSphere(pos - _Sphere.xyz, _Sphere.w);
+    //return sdfValue;
+    //
+    //
+    //float cl = sdCappedCylinder(sphereInfo.pos - pos, 10, 1);
+    //float tr = sdTorus(sphereInfo.pos - pos, float2(1.0, 0.5));
+    //if(tr < 0.01)
+    //{
+    //    return 0.00;
+    //
+    //}
+    return PerlinNormal(pos, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset, perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence);
+}
+
+float4 march(float3 ro, float3 roJittered, float3 rd, float3 lightDir, CubeInfo cubeInfo, PerlinInfo perlinInfo, CloudInfo cloudInfo, SphereInfo sphereInfo)
 {
     float3 t1 = float3(0.0, 0.0, 0.0);
     float distToBox, distInsideBox;
@@ -94,7 +136,7 @@ float4 march(float3 ro, float3 roJittered, float3 rd, float3 lightDir, CubeInfo 
 
     for (int i = 0; i < MarchSteps; ++i)
     {
-        float fromCamSample = PerlinNormal(t1, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset, perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence);
+        float fromCamSample = sampleDensity(t1, perlinInfo, sphereInfo);
 
         if (fromCamSample > 0.01)
         {
@@ -109,7 +151,7 @@ float4 march(float3 ro, float3 roJittered, float3 rd, float3 lightDir, CubeInfo 
 
             for (int j = 0; j < MarchSteps; ++j)
             {
-                float toLightSample = PerlinNormal(lightRayPos, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset, perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence);
+                float toLightSample = sampleDensity(lightRayPos, perlinInfo, sphereInfo);
                 accumToLight += (toLightSample * marchStepSizeToLight);
 
                 lightRayPos += (lightDir * marchStepSizeToLight);
