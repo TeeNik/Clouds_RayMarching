@@ -129,7 +129,7 @@ Shader "Custom/CloudShader"
 				cloudInfo.density = _Density;
 				cloudInfo.absortion = _Absortion;
 
-				float4 o = march(ro, roJittered, rd, lightDir, cubeInfo, perlinInfo, cloudInfo);
+				float4 o = march(ro, roJittered, rd, lightDir, cubeInfo, perlinInfo, cloudInfo, sphereInfo);
 				return half4(o.rgba);
 			}
 

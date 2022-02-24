@@ -25,13 +25,13 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Absortion: 1
+    - _Absortion: 0.82000124
     - _Amplitude: 0.5
-    - _Coverage: 0.474
+    - _Coverage: 0.43999934
     - _DarknessThreshold: 0.1
     - _Density: 1
     - _DensityScale: 0.0005
-    - _FrameCount: 262
+    - _FrameCount: 48751
     - _Frequency: 1
     - _JitterEnabled: 1
     - _Lacunarity: 3
@@ -45,6 +45,6 @@ Material:
     - _StepSize: 0.02
     - _Transmittance: 1
     m_Colors:
-    - _Offset: {r: 0.1, g: 0.1, b: 0.1, a: 0}
-    - _SpherePos: {r: 0, g: -3.795, b: 0, a: 0}
+    - _Offset: {r: 0.1, g: 0, b: 0.1, a: 0}
+    - _SpherePos: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
