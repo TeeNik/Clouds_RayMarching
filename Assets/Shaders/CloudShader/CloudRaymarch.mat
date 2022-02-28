@@ -25,13 +25,13 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Absortion: 0.82000124
+    - _Absortion: 1
     - _Amplitude: 0.5
-    - _Coverage: 0.43999934
+    - _Coverage: 0.48300025
     - _DarknessThreshold: 0.1
     - _Density: 1
     - _DensityScale: 0.0005
-    - _FrameCount: 48751
+    - _FrameCount: 2123
     - _Frequency: 1
     - _JitterEnabled: 1
     - _Lacunarity: 3
@@ -41,7 +41,7 @@ Material:
     - _NumSteps: 128
     - _Octaves: 8
     - _Persistence: 0.5
-    - _SphereRadius: 2.5
+    - _SphereRadius: 0.5
     - _StepSize: 0.02
     - _Transmittance: 1
     m_Colors:

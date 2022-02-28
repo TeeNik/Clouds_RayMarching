@@ -84,8 +84,8 @@ float sampleDensity(float3 pos, PerlinInfo perlinInfo, SphereInfo sphereInfo)
     //float sdfValue = sdSphere(sphereInfo.pos - pos, sphereInfo.radius) + noise;
     //sdfValue = opSmoothUnion(sdfValue, sdSphere(sphereInfo.pos - pos - float3(1.0, 3.0 + 2.0 * cos(iTime), 0.5), 0.45), 3.0f);
     //
-    ////return (1 - WorleyNormal(pos * 0.5, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset,
-    ////    perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence)) * 0.5;
+    return (1 - WorleyNormal(pos * 0.5, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset,
+        perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence)) * 0.5;
     //
     //if (sdfValue < 0.01)
     //{
