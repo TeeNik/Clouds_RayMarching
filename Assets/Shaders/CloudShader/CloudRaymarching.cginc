@@ -1,6 +1,7 @@
 ﻿#include "Perlin3D.cginc"
 #include "WorleyNoise.cginc"
 #include "../DistanceFunctions.cginc"
+#include "../NoiseFunctions.cginc"
 
 struct SphereInfo
 {
@@ -78,14 +79,12 @@ bool rayBoxDst(float3 boundsMin, float3 boundsMax, float3 rayOrigin, float3 invR
 float sampleDensity(float3 pos, PerlinInfo perlinInfo, SphereInfo sphereInfo)
 {
     float iTime = _Time.y * 1;
-    //float3 fbmCoord = (pos + 2.0 * float3(iTime, 0, iTime)) / 1.5;
     //float noise = PerlinNormal(pos, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset,
     //    perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence);
-    //float sdfValue = sdSphere(sphereInfo.pos - pos, sphereInfo.radius) + noise;
-    //sdfValue = opSmoothUnion(sdfValue, sdSphere(sphereInfo.pos - pos - float3(1.0, 3.0 + 2.0 * cos(iTime), 0.5), 0.45), 3.0f);
-    //
-    return (1 - WorleyNormal(pos * 0.5, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset,
-        perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence)) * 0.5;
+    //float worley = (WorleyNormal(pos, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset,
+    //    perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence)) * 0.5;
+    //return worley - fbm(pos * 20) * 0.35;
+
     //
     //if (sdfValue < 0.01)
     //{

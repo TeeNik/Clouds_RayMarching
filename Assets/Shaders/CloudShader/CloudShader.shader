@@ -5,18 +5,18 @@ Shader "Custom/CloudShader"
 		_Density("Density", Range(0.0, 1.0)) = 0.04
 		_Absortion("Absortion", Range(0.0, 20.0)) = 20.0
 
-		_Coverage("Coverage", Range(0.0, 0.5)) = 0.42
+		_Coverage("Coverage", Range(0.0, 1.0)) = 0.42
 		_Octaves("Octaves", Range(1, 8)) = 8
 		_Offset("Offset", Vector) = (0.0, 0.005, 0.0, 0.0)
 		_Frequency("Frequency", Float) = 3.0
 		_Lacunarity("Lacunarity", Float) = 3.0
 
-		/*[HideInInspector]*/ _SphereRadius("SphereRadius", Float) = 0.5
-		/*[HideInInspector]*/ _SpherePos("SpherePos", Vector) = (0.0, 0.0, 0.0)
-		/*				   */
-		/*[HideInInspector]*/ _SpherePos("_CubeMinBound", Vector) = (0.0, 0.0, 0.0)
-		/*[HideInInspector]*/ _SpherePos("_CubeMaxBound", Vector) = (0.0, 0.0, 0.0)
-		/*				   */
+		[HideInInspector] _SphereRadius("SphereRadius", Float) = 0.5
+		[HideInInspector] _SpherePos("SpherePos", Vector) = (0.0, 0.0, 0.0)
+						   
+		[HideInInspector] _SpherePos("_CubeMinBound", Vector) = (0.0, 0.0, 0.0)
+		[HideInInspector] _SpherePos("_CubeMaxBound", Vector) = (0.0, 0.0, 0.0)
+						   
 		/*[HideInInspector]*/ _JitterEnabled("JitterEnabled", Range(0, 1)) = 1
 		/*[HideInInspector]*/ _FrameCount("FrameCount", Int) = 0.0
 		/*				   */
@@ -116,7 +116,7 @@ Shader "Custom/CloudShader"
 
 				// perlin noise
 				PerlinInfo perlinInfo;
-				perlinInfo.cutOff = _Coverage;
+				perlinInfo.cutOff = 1.0 - _Coverage;
 				perlinInfo.octaves = _Octaves;
 				perlinInfo.offset = _Offset * _Time.y;
 				perlinInfo.freq = _Frequency;
@@ -129,9 +129,14 @@ Shader "Custom/CloudShader"
 				cloudInfo.density = _Density;
 				cloudInfo.absortion = _Absortion;
 
-				float n = (1 - WorleyNormal(i.wPos, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset,
-					perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence)) * 0.5;
-				return half4(n, n, n, 1);
+				//float n = GetWorleyNoise3D(i.wPos);
+				//n = fbm(i.wPos * 10);
+				//return half4(n, n, n, 1);
+
+				//float n = (WorleyNormal(i.wPos, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset,
+				//	perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence)) * 0.5;
+				//n -= fbm(i.wPos * 10) * 0.105;
+				//return half4(n, n, n, 1);
 				
 				float4 o = march(ro, roJittered, rd, lightDir, cubeInfo, perlinInfo, cloudInfo, sphereInfo);
 				return half4(o.rgba);

@@ -1,4 +1,4 @@
-﻿#define PI 3.14159265359
+#define PI 3.14159265359
 
 float Hash(float f)
 {
@@ -59,7 +59,7 @@ float4 GetWorleyNoise3D(float3 uvw)
         }
     }
 
-    return res;
+    return 1.0 - res;
 }
 
 float fBMWorley(float3 x, float lacunarity, float gain, int numOctaves)
