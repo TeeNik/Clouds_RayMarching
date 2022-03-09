@@ -24,28 +24,33 @@ public class Generate3DTexture : MonoBehaviour
 
     public void Generate()
     {
-        ////CreateRenderTexture();
-        ////int kernel = ComputeShader.FindKernel(KernelName);
-        ////ComputeShader.SetTexture(kernel, "Result", Texture);
-        ////ComputeShader.SetInt("Resolution", Resolution);
-        ////ComputeShader.GetKernelThreadGroupSizes(kernel, out uint xGroupSize, out uint yGroupSize, out uint zGroupSize);
-        ////ComputeShader.Dispatch(kernel, Resolution / (int)xGroupSize, Resolution / (int)yGroupSize, 1);
-        ////
-        ////var texture3D = SaveAsset();
+        CreateRenderTexture();
+        int kernel = ComputeShader.FindKernel(KernelName);
+        ComputeShader.SetTexture(kernel, "Result", Texture);
+        ComputeShader.SetInt("Resolution", Resolution);
+        ComputeShader.GetKernelThreadGroupSizes(kernel, out uint xGroupSize, out uint yGroupSize, out uint zGroupSize);
+        ComputeShader.Dispatch(kernel, Resolution / (int)xGroupSize, Resolution / (int)yGroupSize, Resolution / (int)zGroupSize);
+        
+        SaveAsset();
         //var renderer = GetComponent<MeshRenderer>();
         //renderer.sharedMaterial.SetTexture("Volume", TestTexture);
         //renderer.sharedMaterial.SetFloat("NumSteps", 1);
     }
 
-    //public void CreateRenderTexture()
-    //{
-    //    Texture = new RenderTexture(Resolution, Resolution, 0, RenderTextureFormat.ARGB32);
-    //    Texture.enableRandomWrite = true;
-    //    Texture.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
-    //    Texture.volumeDepth = Resolution;
-    //    Texture.Create();
-    //}
-    //
+    public void CreateRenderTexture()
+    {
+        var format = UnityEngine.Experimental.Rendering.GraphicsFormat.R16G16B16A16_UNorm;
+        Texture = new RenderTexture(Resolution, Resolution, 0);
+        Texture.graphicsFormat = format;
+        Texture.volumeDepth = Resolution;
+        Texture.enableRandomWrite = true;
+        Texture.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
+        Texture.name = name;
+        Texture.Create();
+        Texture.wrapMode = TextureWrapMode.Repeat;
+        Texture.filterMode = FilterMode.Bilinear;
+    }
+    
     //RenderTexture CreateSliceOfRenderTexture(int layer)
     //{
     //    RenderTexture render = new RenderTexture(Resolution, Resolution, 0, RenderTextureFormat.ARGB32);
@@ -78,8 +83,9 @@ public class Generate3DTexture : MonoBehaviour
         AssetName = sceneName + "_" + AssetName;
         Texture2D[] slices = new Texture2D[Resolution];
 
+        int kernel = Slicer.FindKernel("CSMain");
         Slicer.SetInt("resolution", Resolution);
-        Slicer.SetTexture(0, "Noise", Texture);
+        Slicer.SetTexture(kernel, "Noise", Texture);
 
         for (int layer = 0; layer < Resolution; layer++)
         {
@@ -88,17 +94,17 @@ public class Generate3DTexture : MonoBehaviour
             slice.enableRandomWrite = true;
             slice.Create();
 
-            Slicer.SetTexture(0, "Result", slice);
+            Slicer.SetTexture(kernel, "Result", slice);
             Slicer.SetInt("Layer", layer);
             int numThreadGroups = Mathf.CeilToInt(Resolution / (float)threadGroupSize);
-            Slicer.Dispatch(0, numThreadGroups, numThreadGroups, 1);
+            Slicer.Dispatch(kernel, numThreadGroups, numThreadGroups, 1);
 
             slices[layer] = ConvertFromRenderTexture(slice);
 
         }
 
         var x = Tex3DFromTex2DArray(slices, Resolution);
-        UnityEditor.AssetDatabase.CreateAsset(x, "Assets/Resources/" + AssetName + ".asset");
+        UnityEditor.AssetDatabase.CreateAsset(x, "Assets/ComputeShaders/" + AssetName + ".asset");
     }
 
     Texture3D Tex3DFromTex2DArray(Texture2D[] slices, int resolution)
