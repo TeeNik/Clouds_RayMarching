@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-public class Generate3DTexture : MonoBehaviour
+public class TextureGenerator : MonoBehaviour
 {
     public int Resolution;
     public ComputeShader ComputeShader;
@@ -17,6 +17,16 @@ public class Generate3DTexture : MonoBehaviour
     public Material Material;
     public Texture3D TestTexture;
 
+    public float Density;
+    public float Absortion;
+    public float Coverage;
+    public int Octaves;
+    public float Frequency;
+    public float Lacunarity;
+    public float Amplitude;
+    public float Persistence;
+
+
     private void Start()
     {
         Generate();
@@ -28,13 +38,23 @@ public class Generate3DTexture : MonoBehaviour
         int kernel = ComputeShader.FindKernel(KernelName);
         ComputeShader.SetTexture(kernel, "Result", Texture);
         ComputeShader.SetInt("Resolution", Resolution);
+
+        ComputeShader.SetFloat("Density", Density);
+        ComputeShader.SetFloat("Absortion", Absortion);
+        ComputeShader.SetFloat("Coverage", Coverage);
+        ComputeShader.SetInt("Octaves", Octaves);
+        ComputeShader.SetFloat("Frequency", Frequency);
+        ComputeShader.SetFloat("Lacunarity", Lacunarity);
+        ComputeShader.SetFloat("Amplitude", Amplitude);
+        ComputeShader.SetFloat("Persistence", Persistence);
+
         ComputeShader.GetKernelThreadGroupSizes(kernel, out uint xGroupSize, out uint yGroupSize, out uint zGroupSize);
         ComputeShader.Dispatch(kernel, Resolution / (int)xGroupSize, Resolution / (int)yGroupSize, Resolution / (int)zGroupSize);
         
         SaveAsset();
-        //var renderer = GetComponent<MeshRenderer>();
-        //renderer.sharedMaterial.SetTexture("Volume", TestTexture);
-        //renderer.sharedMaterial.SetFloat("NumSteps", 1);
+        var renderer = GetComponent<MeshRenderer>();
+        renderer.sharedMaterial.SetTexture("Volume", TestTexture);
+        renderer.sharedMaterial.SetFloat("NumSteps", 1);
     }
 
     public void CreateRenderTexture()
@@ -80,7 +100,7 @@ public class Generate3DTexture : MonoBehaviour
     public void SaveAsset()
     {
         string sceneName = UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene().name;
-        AssetName = sceneName + "_" + AssetName;
+        string name = sceneName + "_" + AssetName;
         Texture2D[] slices = new Texture2D[Resolution];
 
         int kernel = Slicer.FindKernel("CSMain");
@@ -103,8 +123,8 @@ public class Generate3DTexture : MonoBehaviour
 
         }
 
-        var x = Tex3DFromTex2DArray(slices, Resolution);
-        UnityEditor.AssetDatabase.CreateAsset(x, "Assets/ComputeShaders/" + AssetName + ".asset");
+        TestTexture = Tex3DFromTex2DArray(slices, Resolution);
+        UnityEditor.AssetDatabase.CreateAsset(TestTexture, "Assets/ComputeShaders/" + name + ".asset");
     }
 
     Texture3D Tex3DFromTex2DArray(Texture2D[] slices, int resolution)
