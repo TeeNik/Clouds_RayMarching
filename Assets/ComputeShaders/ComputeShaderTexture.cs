@@ -27,11 +27,6 @@ public class ComputeShaderTexture : MonoBehaviour
             RenderTexture.height / (int)yGroupSize, 1);
     }
 
-    void Update()
-    {
-        
-    }
-
     private void OnRenderImage(RenderTexture source, RenderTexture destination)
     {
         Graphics.Blit(RenderTexture, destination);

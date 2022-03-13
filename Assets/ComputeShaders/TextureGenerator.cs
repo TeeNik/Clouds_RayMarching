@@ -15,7 +15,9 @@ public class TextureGenerator : MonoBehaviour
     private const int threadGroupSize = 32;
 
     public Material Material;
-    public Texture3D TestTexture;
+    public Texture3D TestTexture1;
+    public Texture3D TestTexture2;
+    bool textFlag = false;
 
     public float Density;
     public float Absortion;
@@ -26,10 +28,23 @@ public class TextureGenerator : MonoBehaviour
     public float Amplitude;
     public float Persistence;
 
-
     private void Start()
     {
-        Generate();
+        //Generate();
+    }
+
+    private void Update()
+    {
+        if(Input.GetKeyDown(KeyCode.G))
+        {
+            Generate();
+            return;
+
+            var renderer = GetComponent<MeshRenderer>();
+            renderer.sharedMaterial.SetTexture("_Volume", textFlag ? TestTexture1 : TestTexture2);
+            //renderer.sharedMaterial.SetFloat("_DensityScale", textFlag ? 0.5f : 5.0f);
+            textFlag = !textFlag;
+        }
     }
 
     public void Generate()
@@ -50,11 +65,10 @@ public class TextureGenerator : MonoBehaviour
 
         ComputeShader.GetKernelThreadGroupSizes(kernel, out uint xGroupSize, out uint yGroupSize, out uint zGroupSize);
         ComputeShader.Dispatch(kernel, Resolution / (int)xGroupSize, Resolution / (int)yGroupSize, Resolution / (int)zGroupSize);
-        
-        SaveAsset();
+
+        var output = SaveAsset();
         var renderer = GetComponent<MeshRenderer>();
-        renderer.sharedMaterial.SetTexture("Volume", TestTexture);
-        renderer.sharedMaterial.SetFloat("NumSteps", 1);
+        renderer.sharedMaterial.SetTexture("_Volume", output);
     }
 
     public void CreateRenderTexture()
@@ -97,10 +111,10 @@ public class TextureGenerator : MonoBehaviour
         return output;
     }
 
-    public void SaveAsset()
+    public Texture3D SaveAsset()
     {
         string sceneName = UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene().name;
-        string name = sceneName + "_" + AssetName;
+        AssetName = sceneName + "_" + AssetName;
         Texture2D[] slices = new Texture2D[Resolution];
 
         int kernel = Slicer.FindKernel("CSMain");
@@ -123,8 +137,11 @@ public class TextureGenerator : MonoBehaviour
 
         }
 
-        TestTexture = Tex3DFromTex2DArray(slices, Resolution);
-        UnityEditor.AssetDatabase.CreateAsset(TestTexture, "Assets/ComputeShaders/" + name + ".asset");
+        Texture3D output = Tex3DFromTex2DArray(slices, Resolution);
+        //AssetDatabase.CreateAsset(output, "Assets/ComputeShaders/" + name + ".asset");
+        //AssetDatabase.SaveAssets();
+        //AssetDatabase.Refresh();
+        return output;
     }
 
     Texture3D Tex3DFromTex2DArray(Texture2D[] slices, int resolution)
