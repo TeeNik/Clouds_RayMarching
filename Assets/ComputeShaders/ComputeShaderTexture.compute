@@ -7,13 +7,26 @@
 RWTexture3D<float4> Result;
 uniform uint Resolution;
 
+uniform float Density;
+uniform float Absortion;
+uniform float Coverage;
+uniform uint Octaves;
+uniform float Frequency;
+uniform float Lacunarity;
+uniform float Amplitude;
+uniform float Persistence;
+uniform float3 Offset;
+
+float GetNoise(float3 pos)
+{
+    return PerlinNormal(pos, 1.0 - Coverage, Octaves, Offset, Frequency, Amplitude, Lacunarity, Persistence);
+}
+
 [numthreads(8,8,8)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
     float3 uv = id.xyz / (float)Resolution;
-    //float3 color = rand2dTo3d(uv);
-    float3 color = fBMWorley(uv * 10, 2., 0.5, 4);
-
-    //float n = id.x / (float)Resolution + id.y / (float)Resolution;
+    //float3 color = fBMWorley(uv, 2., 0.5, 4);
+    float3 color = GetNoise(uv);
     Result[id.xyz] = float4(color, 1.0);
 }

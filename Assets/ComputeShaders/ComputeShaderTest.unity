@@ -157,10 +157,19 @@ MonoBehaviour:
   Resolution: 128
   ComputeShader: {fileID: 7200000, guid: a2804afde80a40341b8ab4a6426c93a6, type: 3}
   KernelName: CSMain
-  AssetName: 3DTexture
+  AssetName: ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_Texture
   Slicer: {fileID: 7200000, guid: 80e0787c402884c47ad1a5f34c3beb36, type: 3}
   Material: {fileID: 2100000, guid: 0157a74082cd3a4409c9748b8cb160c4, type: 2}
-  TestTexture: {fileID: 11700000, guid: 1878fe4d99cd36a4f9227e530798dbaf, type: 3}
+  TestTexture1: {fileID: 11700000, guid: 9b83d08922a540441824af7e87d45ed9, type: 3}
+  TestTexture2: {fileID: 11700000, guid: 1878fe4d99cd36a4f9227e530798dbaf, type: 3}
+  Density: 0.5
+  Absortion: 1
+  Coverage: 0.5
+  Octaves: 1
+  Frequency: 1
+  Lacunarity: 3
+  Amplitude: 0.5
+  Persistence: 0.5
 --- !u!23 &883385225
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -219,7 +228,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 883385223}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -21.736872}
+  m_LocalPosition: {x: 0.5, y: 0.502, z: -0.45}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
