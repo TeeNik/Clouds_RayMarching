@@ -19,8 +19,6 @@ public class TextureGenerator : MonoBehaviour
     public Texture3D TestTexture2;
     bool textFlag = false;
 
-    public float Density;
-    public float Absortion;
     public float Coverage;
     public int Octaves;
     public float Frequency;
@@ -28,35 +26,14 @@ public class TextureGenerator : MonoBehaviour
     public float Amplitude;
     public float Persistence;
 
-    private void Start()
-    {
-        //Generate();
-    }
-
-    private void Update()
-    {
-        if(Input.GetKeyDown(KeyCode.G))
-        {
-            Generate();
-            return;
-
-            var renderer = GetComponent<MeshRenderer>();
-            renderer.sharedMaterial.SetTexture("_Volume", textFlag ? TestTexture1 : TestTexture2);
-            //renderer.sharedMaterial.SetFloat("_DensityScale", textFlag ? 0.5f : 5.0f);
-            textFlag = !textFlag;
-        }
-    }
-
-    public void Generate()
+    public Texture3D Generate()
     {
         CreateRenderTexture();
         int kernel = ComputeShader.FindKernel(KernelName);
         ComputeShader.SetTexture(kernel, "Result", Texture);
         ComputeShader.SetInt("Resolution", Resolution);
 
-        ComputeShader.SetFloat("Density", Density);
-        ComputeShader.SetFloat("Absortion", Absortion);
-        ComputeShader.SetFloat("Coverage", Coverage);
+        ComputeShader.SetFloat("Coverage", 1.0f - Coverage);
         ComputeShader.SetInt("Octaves", Octaves);
         ComputeShader.SetFloat("Frequency", Frequency);
         ComputeShader.SetFloat("Lacunarity", Lacunarity);
@@ -66,9 +43,7 @@ public class TextureGenerator : MonoBehaviour
         ComputeShader.GetKernelThreadGroupSizes(kernel, out uint xGroupSize, out uint yGroupSize, out uint zGroupSize);
         ComputeShader.Dispatch(kernel, Resolution / (int)xGroupSize, Resolution / (int)yGroupSize, Resolution / (int)zGroupSize);
 
-        var output = SaveAsset();
-        var renderer = GetComponent<MeshRenderer>();
-        renderer.sharedMaterial.SetTexture("_Volume", output);
+        return SaveAsset();
     }
 
     public void CreateRenderTexture()
@@ -84,23 +59,6 @@ public class TextureGenerator : MonoBehaviour
         Texture.wrapMode = TextureWrapMode.Repeat;
         Texture.filterMode = FilterMode.Bilinear;
     }
-    
-    //RenderTexture CreateSliceOfRenderTexture(int layer)
-    //{
-    //    RenderTexture render = new RenderTexture(Resolution, Resolution, 0, RenderTextureFormat.ARGB32);
-    //    render.dimension = UnityEngine.Rendering.TextureDimension.Tex2D;
-    //    render.enableRandomWrite = true;
-    //    render.wrapMode = TextureWrapMode.Clamp;
-    //    render.Create();
-    //
-    //    int kernelIndex = Texture3DSlicer.FindKernel("CSMain");
-    //    Texture3DSlicer.SetTexture(kernelIndex, "noise", Texture);
-    //    Texture3DSlicer.SetInt("layer", layer);
-    //    Texture3DSlicer.SetTexture(kernelIndex, "Result", render);
-    //    Texture3DSlicer.Dispatch(kernelIndex, Resolution, Resolution, 1);
-    //
-    //    return render;
-    //}
 
     protected Texture2D ConvertFromRenderTexture(RenderTexture rt)
     {
