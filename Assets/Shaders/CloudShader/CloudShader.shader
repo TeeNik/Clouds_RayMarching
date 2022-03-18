@@ -11,17 +11,19 @@ Shader "Custom/CloudShader"
 		_Frequency("Frequency", Float) = 3.0
 		_Lacunarity("Lacunarity", Float) = 3.0
 
+		_Volume("Volume", 3D) = "white" {}
+
 		[HideInInspector] _SphereRadius("SphereRadius", Float) = 0.5
 		[HideInInspector] _SpherePos("SpherePos", Vector) = (0.0, 0.0, 0.0)
 						   
 		[HideInInspector] _SpherePos("_CubeMinBound", Vector) = (0.0, 0.0, 0.0)
 		[HideInInspector] _SpherePos("_CubeMaxBound", Vector) = (0.0, 0.0, 0.0)
 						   
-		/*[HideInInspector]*/ _JitterEnabled("JitterEnabled", Range(0, 1)) = 1
-		/*[HideInInspector]*/ _FrameCount("FrameCount", Int) = 0.0
-		/*				   */
-		/*[HideInInspector]*/ _Amplitude("Amplitude", Float) = 0.5
-		/*[HideInInspector]*/ _Persistence("Persistence", Float) = 0.5
+		[HideInInspector] _JitterEnabled("JitterEnabled", Range(0, 1)) = 1
+		[HideInInspector] _FrameCount("FrameCount", Int) = 0.0
+						 
+		[HideInInspector] _Amplitude("Amplitude", Float) = 0.5
+		[HideInInspector] _Persistence("Persistence", Float) = 0.5
 	}
 
 		SubShader
@@ -60,6 +62,8 @@ Shader "Custom/CloudShader"
 
 			float _Lacunarity;
 			float _Persistence;
+
+			sampler3D _Volume;
 
 			float _SphereRadius;
 			float3 _SpherePos;
@@ -118,11 +122,12 @@ Shader "Custom/CloudShader"
 				PerlinInfo perlinInfo;
 				perlinInfo.cutOff = 1.0 - _Coverage;
 				perlinInfo.octaves = _Octaves;
-				perlinInfo.offset = _Offset * _Time.y;
+				perlinInfo.offset = _Offset/* * _Time.y*/;
 				perlinInfo.freq = _Frequency;
 				perlinInfo.amp = _Amplitude;
 				perlinInfo.lacunarity = _Lacunarity;
 				perlinInfo.persistence = _Persistence;
+				perlinInfo.noise = _Volume;
 
 				// cloud
 				CloudInfo cloudInfo;
@@ -137,6 +142,11 @@ Shader "Custom/CloudShader"
 				//	perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence)) * 0.5;
 				//n -= fbm(i.wPos * 10) * 0.105;
 				//return half4(n, n, n, 1);
+
+
+				//float3 pos = (i.wPos - _CubeMinBound) / (_CubeMaxBound - _CubeMinBound);
+				//fixed4 col = tex3D(_Volume, pos);
+				//return half4(col.xyz, 1);
 				
 				float4 o = march(ro, roJittered, rd, lightDir, cubeInfo, perlinInfo, cloudInfo, sphereInfo);
 				return half4(o.rgba);

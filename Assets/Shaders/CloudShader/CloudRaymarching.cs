@@ -18,6 +18,7 @@ public class CloudRaymarching : MonoBehaviour
     [SerializeField] private PostProcessLayer ppLayer = null;
     [SerializeField] private Transform sphere = null;
     [SerializeField] private Transform cube = null;
+    [SerializeField] private TextureGenerator textureGenerator = null;
 
     private Material raymarchMat;
 
@@ -35,12 +36,27 @@ public class CloudRaymarching : MonoBehaviour
     {
         raymarchMat = GetComponent<MeshRenderer>().sharedMaterial;
         Camera.onPreRender += MyPreRender;
+
+        if (textureGenerator)
+        {
+            Texture3D noiseTexture = textureGenerator.Generate();
+            raymarchMat.SetTexture("_Volume", noiseTexture);
+        }
     }
 
     private void Update()
     {
         Vector3 eulers = new Vector3(0.0f, sunSpeedSlider.value * Time.deltaTime, 0.0f);
         sun.Rotate(eulers, Space.World);
+
+        if(Input.GetKeyDown(KeyCode.G))
+        {
+            if (textureGenerator)
+            {
+                Texture3D noiseTexture = textureGenerator.Generate();
+                raymarchMat.SetTexture("_Volume", noiseTexture);
+            }
+        }
     }
 
     private void OnDestroy()

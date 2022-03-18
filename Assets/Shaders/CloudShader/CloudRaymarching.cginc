@@ -24,6 +24,7 @@ struct PerlinInfo
     float amp;
     float lacunarity;
     float persistence;
+    sampler3D noise;
 };
 
 struct CloudInfo
@@ -76,7 +77,7 @@ bool rayBoxDst(float3 boundsMin, float3 boundsMax, float3 rayOrigin, float3 invR
     return dstA <= dstB;
 }
 
-float sampleDensity(float3 pos, PerlinInfo perlinInfo, SphereInfo sphereInfo)
+float sampleDensity(float3 pos, PerlinInfo perlinInfo, CubeInfo cube)
 {
     float iTime = _Time.y * 1;
     //float noise = PerlinNormal(pos, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset,
@@ -111,7 +112,12 @@ float sampleDensity(float3 pos, PerlinInfo perlinInfo, SphereInfo sphereInfo)
     //    return 0.00;
     //
     //}
-    return PerlinNormal(pos, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset, perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence);
+
+    float3 normalizedPos = (pos - cube.minBound) / (cube.maxBound - cube.minBound);
+    fixed4 col = tex3D(perlinInfo.noise, normalizedPos);
+    return col.x;
+
+    return PerlinNormal(normalizedPos, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset, perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence);
 }
 
 float4 march(float3 ro, float3 roJittered, float3 rd, float3 lightDir, CubeInfo cubeInfo, PerlinInfo perlinInfo, CloudInfo cloudInfo, SphereInfo sphereInfo)
@@ -135,7 +141,7 @@ float4 march(float3 ro, float3 roJittered, float3 rd, float3 lightDir, CubeInfo 
 
     for (int i = 0; i < MarchSteps; ++i)
     {
-        float fromCamSample = sampleDensity(t1, perlinInfo, sphereInfo);
+        float fromCamSample = sampleDensity(t1, perlinInfo, cubeInfo);
 
         if (fromCamSample > 0.01)
         {
@@ -150,7 +156,7 @@ float4 march(float3 ro, float3 roJittered, float3 rd, float3 lightDir, CubeInfo 
 
             for (int j = 0; j < MarchSteps; ++j)
             {
-                float toLightSample = sampleDensity(lightRayPos, perlinInfo, sphereInfo);
+                float toLightSample = sampleDensity(lightRayPos, perlinInfo, cubeInfo);
                 accumToLight += (toLightSample * marchStepSizeToLight);
 
                 lightRayPos += (lightDir * marchStepSizeToLight);
