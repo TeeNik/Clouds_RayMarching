@@ -14,17 +14,13 @@ public class TextureGenerator : MonoBehaviour
     private RenderTexture Texture;
     private const int threadGroupSize = 32;
 
-    public Material Material;
-    public Texture3D TestTexture1;
-    public Texture3D TestTexture2;
-    bool textFlag = false;
-
     public float Coverage;
     public int Octaves;
     public float Frequency;
     public float Lacunarity;
     public float Amplitude;
     public float Persistence;
+    public Vector3 Index;
 
     public Texture3D Generate()
     {
@@ -39,6 +35,7 @@ public class TextureGenerator : MonoBehaviour
         ComputeShader.SetFloat("Lacunarity", Lacunarity);
         ComputeShader.SetFloat("Amplitude", Amplitude);
         ComputeShader.SetFloat("Persistence", Persistence);
+        ComputeShader.SetVector("CellIndex", Index);
 
         ComputeShader.GetKernelThreadGroupSizes(kernel, out uint xGroupSize, out uint yGroupSize, out uint zGroupSize);
         ComputeShader.Dispatch(kernel, Resolution / (int)xGroupSize, Resolution / (int)yGroupSize, Resolution / (int)zGroupSize);
