@@ -3,9 +3,11 @@
 #include "Random.cginc"
 #include "Perlin3D.cginc"
 #include "WorleyNoise.cginc"
+#include "NoiseFunctions.cginc"
 
 RWTexture3D<float4> Result;
 uniform uint Resolution;
+uniform float3 CellIndex;
 
 uniform float Coverage;
 uniform uint Octaves;
@@ -17,7 +19,7 @@ uniform float3 Offset;
 
 float GetNoise(float3 pos)
 {
-    return WorleyNormal(pos, Coverage, Octaves, Offset, Frequency, Amplitude, Lacunarity, Persistence);
+    //return WorleyNormal(pos, Coverage, Octaves, Offset, Frequency, Amplitude, Lacunarity, Persistence);
     return PerlinNormal(pos, Coverage, Octaves, Offset, Frequency, Amplitude, Lacunarity, Persistence);
 }
 
@@ -25,6 +27,6 @@ float GetNoise(float3 pos)
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
     float3 uv = id.xyz / (float)Resolution;
-    float3 color = GetNoise(uv);
+    float3 color = GetNoise(uv + CellIndex * Resolution);
     Result[id.xyz] = float4(color, 1.0);
 }

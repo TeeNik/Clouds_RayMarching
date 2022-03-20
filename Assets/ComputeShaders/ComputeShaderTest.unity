@@ -157,7 +157,7 @@ MonoBehaviour:
   Resolution: 128
   ComputeShader: {fileID: 7200000, guid: a2804afde80a40341b8ab4a6426c93a6, type: 3}
   KernelName: CSMain
-  AssetName: ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_Texture
+  AssetName: ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_Texture
   Slicer: {fileID: 7200000, guid: 80e0787c402884c47ad1a5f34c3beb36, type: 3}
   Material: {fileID: 2100000, guid: 0157a74082cd3a4409c9748b8cb160c4, type: 2}
   TestTexture1: {fileID: 11700000, guid: 9b83d08922a540441824af7e87d45ed9, type: 3}
@@ -190,7 +190,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 0157a74082cd3a4409c9748b8cb160c4, type: 2}
+  - {fileID: 2100000, guid: 2ccabf563ddb80b449280f5761f0782a, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
