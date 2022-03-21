@@ -20,6 +20,7 @@ public class CloudRaymarching : MonoBehaviour
     [SerializeField] private Transform cube = null;
     [SerializeField] private TextureGenerator textureGenerator = null;
 
+    public Vector3 Index;
     private Material raymarchMat;
 
     private readonly int posId = Shader.PropertyToID("_SpherePos");
@@ -34,7 +35,9 @@ public class CloudRaymarching : MonoBehaviour
 
     private void Start()
     {
-        raymarchMat = GetComponent<MeshRenderer>().sharedMaterial;
+        var renderer = GetComponent<MeshRenderer>();
+        renderer.material = new Material(renderer.material);
+        raymarchMat = renderer.material;
         Camera.onPreRender += MyPreRender;
 
         if (textureGenerator)
@@ -49,7 +52,7 @@ public class CloudRaymarching : MonoBehaviour
         Vector3 eulers = new Vector3(0.0f, sunSpeedSlider.value * Time.deltaTime, 0.0f);
         sun.Rotate(eulers, Space.World);
 
-        if(Input.GetKeyDown(KeyCode.G))
+        if (Input.GetKeyDown(KeyCode.G))
         {
             if (textureGenerator)
             {
@@ -76,5 +79,7 @@ public class CloudRaymarching : MonoBehaviour
         raymarchMat.SetInt(jitterId, (int)jitterSlider.value);
         raymarchMat.SetFloat(frameCountId, Time.frameCount);
         ppLayer.antialiasingMode = taaToggle.isOn ? PostProcessLayer.Antialiasing.TemporalAntialiasing : PostProcessLayer.Antialiasing.None;
+
+        raymarchMat.SetVector("_Index", Index);
     }
 }

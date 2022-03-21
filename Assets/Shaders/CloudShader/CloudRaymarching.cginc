@@ -13,6 +13,7 @@ struct CubeInfo
 {
     float3 minBound;
     float3 maxBound;
+    float3 index;
 };
 
 struct PerlinInfo
@@ -86,19 +87,12 @@ float sampleDensity(float3 pos, PerlinInfo perlinInfo, CubeInfo cube)
     //    perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence)) * 0.5;
     //return worley - fbm(pos * 20) * 0.35;
 
-    //
-    //if (sdfValue < 0.01)
-    //{
-    //    return 0.1;
-    //} 
-    //else {
-    //    return 0.0f;
-    //}
-    //
-    ////float sdfValue = sdSphere(pos - float3(-8.0, 2.0 + 20.0 * sin(iTime), -1), sphereInfo.radius);
-    ////sdfValue = sdSmoothUnion(sdfValue, sdSphere(pos - float3(8.0, 8.0 + 12.0 * cos(iTime), 3), 5.6), 3.0f);
-    ////sdfValue = sdSmoothUnion(sdfValue, sdSphere(pos - float3(5.0 * sin(iTime), 3.0, 0), 8.0), 3.0) + 7.0 * noise;
-    //////sdfValue = sdSmoothUnion(sdfValue, sdPlane(pos + float3(0, 0.4, 0)), 22.0);
+    //float sdfValue = sdSphere(pos, 1.5f) - fbm(pos * 10) * 0.5;
+    //return sdfValue < 0.01 ? 0.2f : 0.0f;
+
+    //sdfValue = sdSmoothUnion(sdfValue, sdSphere(pos - float3(8.0, 8.0 + 12.0 * cos(iTime), 3), 5.6), 3.0f);
+    //sdfValue = sdSmoothUnion(sdfValue, sdSphere(pos - float3(5.0 * sin(iTime), 3.0, 0), 8.0), 3.0) + 7.0 * noise;
+    //sdfValue = sdSmoothUnion(sdfValue, sdPlane(pos + float3(0, 0.4, 0)), 22.0);
     //
     ////float sdfValue = sdSphere(pos, float3(5.0 * sin(iTime), 3.0, 0), 8.0) + 7.0 * fbm_4(fbmCoord / 3.2);
     ////float sphere = sdSphere(pos - _Sphere.xyz, _Sphere.w);
@@ -113,9 +107,9 @@ float sampleDensity(float3 pos, PerlinInfo perlinInfo, CubeInfo cube)
     //
     //}
 
-    float3 normalizedPos = (pos - cube.minBound) / (cube.maxBound - cube.minBound);
-    fixed4 col = tex3D(perlinInfo.noise, normalizedPos);
-    return col.x;
+    float3 normalizedPos = (pos - cube.minBound) / (cube.maxBound - cube.minBound) + cube.index;
+    //fixed4 col = tex3D(perlinInfo.noise, normalizedPos);
+    //return col.x;
 
     return PerlinNormal(normalizedPos, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset, perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence);
 }

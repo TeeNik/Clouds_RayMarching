@@ -12,12 +12,13 @@ Shader "Custom/CloudShader"
 		_Lacunarity("Lacunarity", Float) = 3.0
 
 		_Volume("Volume", 3D) = "white" {}
+		_Index("Index", Vector) = (0.0, 0.0, 0.0)
 
 		[HideInInspector] _SphereRadius("SphereRadius", Float) = 0.5
 		[HideInInspector] _SpherePos("SpherePos", Vector) = (0.0, 0.0, 0.0)
 						   
-		[HideInInspector] _SpherePos("_CubeMinBound", Vector) = (0.0, 0.0, 0.0)
-		[HideInInspector] _SpherePos("_CubeMaxBound", Vector) = (0.0, 0.0, 0.0)
+		[HideInInspector] _CubeMinBound("CubeMinBound", Vector) = (0.0, 0.0, 0.0)
+		[HideInInspector] _CubeMaxBound("CubeMaxBound", Vector) = (0.0, 0.0, 0.0)
 						   
 		[HideInInspector] _JitterEnabled("JitterEnabled", Range(0, 1)) = 1
 		[HideInInspector] _FrameCount("FrameCount", Int) = 0.0
@@ -64,6 +65,7 @@ Shader "Custom/CloudShader"
 			float _Persistence;
 
 			sampler3D _Volume;
+			float3 _Index;
 
 			float _SphereRadius;
 			float3 _SpherePos;
@@ -117,6 +119,7 @@ Shader "Custom/CloudShader"
 				CubeInfo cubeInfo;
 				cubeInfo.minBound = _CubeMinBound;
 				cubeInfo.maxBound = _CubeMaxBound;
+				cubeInfo.index = _Index;
 
 				// perlin noise
 				PerlinInfo perlinInfo;
@@ -147,7 +150,7 @@ Shader "Custom/CloudShader"
 				//float3 pos = (i.wPos - _CubeMinBound) / (_CubeMaxBound - _CubeMinBound);
 				//fixed4 col = tex3D(_Volume, pos);
 				//return half4(col.xyz, 1);
-				
+
 				float4 o = march(ro, roJittered, rd, lightDir, cubeInfo, perlinInfo, cloudInfo, sphereInfo);
 				return half4(o.rgba);
 			}
