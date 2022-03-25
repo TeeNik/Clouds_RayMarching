@@ -1,4 +1,4 @@
-Shader "Custom/CloudShader"
+Shader "Custom/CloudShaderCamera"
 {
 	Properties
 	{
@@ -52,6 +52,11 @@ Shader "Custom/CloudShader"
 			#include "Lighting.cginc"
 			#include "CloudRaymarching.cginc"
 
+			uniform sampler2D _CameraDepthTexture;
+			uniform float4x4 _CamFrustum;
+			uniform float4x4 _CamToWorld;
+			uniform float _MaxDistance;
+
 			float _Density;
 			float _Absortion;
 
@@ -65,6 +70,7 @@ Shader "Custom/CloudShader"
 			float _Persistence;
 
 			sampler3D _Volume;
+			sampler2D _Background;
 			float3 _Index;
 
 			float _SphereRadius;
@@ -79,28 +85,39 @@ Shader "Custom/CloudShader"
 			struct appdata
 			{
 				float4 vertex : POSITION;
+				float2 uv : TEXCOORD0;
 			};
 
 			struct v2f
 			{
 				float4 vertex : SV_POSITION;
-				float3 wPos : TEXCOORD0;
+				float2 uv : TEXCOORD0;
+				float3 ray : TEXCOORD1;
 			};
 
 			v2f vert(appdata v)
 			{
 				v2f o;
-
+				half index = v.vertex.z;
+				v.vertex.z = 0.1;
 				o.vertex = UnityObjectToClipPos(v.vertex);
-				o.wPos = mul(unity_ObjectToWorld, v.vertex);
+				o.uv = v.uv;
+
+				o.ray = _CamFrustum[(int)index].xyz;
+				o.ray /= abs(o.ray.z);
+				o.ray = mul(_CamToWorld, o.ray);
 
 				return o;
 			}
 
 			half4 frag(v2f i) : SV_Target
 			{
+
+				float3 rd = normalize(i.ray.xyz);
 				float3 ro = _WorldSpaceCameraPos;
-				float3 rd = normalize(i.wPos - ro);
+
+				//float3 ro = _WorldSpaceCameraPos;
+				//float3 rd = normalize(i.wPos - ro);
 
 				_FrameCount %= 8.0;
 				float2 frameCount = float2(_FrameCount, -_FrameCount);
@@ -151,8 +168,10 @@ Shader "Custom/CloudShader"
 				//fixed4 col = tex3D(_Volume, pos);
 				//return half4(col.xyz, 1);
 
+				fixed3 back = tex2D(_Background, i.uv);
+
 				float4 o = march(ro, roJittered, rd, lightDir, cubeInfo, perlinInfo, cloudInfo, sphereInfo);
-				return half4(o.rgba);
+				return half4(o.rgb * o.a + back * (1 - o.a), 1.0);
 			}
 
 			ENDCG
