@@ -108,8 +108,8 @@ float sampleDensity(float3 pos, PerlinInfo perlinInfo, CubeInfo cube)
     //}
 
     float3 normalizedPos = (pos - cube.minBound) / (cube.maxBound - cube.minBound) + cube.index;
-    //fixed4 col = tex3D(perlinInfo.noise, normalizedPos);
-    //return col.x;
+    fixed4 col = tex3D(perlinInfo.noise, normalizedPos);
+    return col.x;
 
     return PerlinNormal(normalizedPos, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset, perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence);
 }

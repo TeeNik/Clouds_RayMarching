@@ -4,6 +4,8 @@ using UnityEngine;
 using UnityEngine.Rendering.PostProcessing;
 using UnityEngine.UI;
 
+[RequireComponent(typeof(Camera))]
+[ExecuteInEditMode]
 public class CloudRaymarchingCamera : MonoBehaviour
 {
     [Header("UI")]
@@ -77,7 +79,11 @@ public class CloudRaymarchingCamera : MonoBehaviour
 
     private void OnRenderImage(RenderTexture source, RenderTexture destination)
     {
-        Graphics.Blit(source, destination, raymarchMat);
+        if (!raymarchMat)
+        {
+            Graphics.Blit(source, destination);
+            return;
+        }
 
         raymarchMat.SetMatrix("_CamFrustum", CamFrustum(Camera));
         raymarchMat.SetMatrix("_CamToWorld", Camera.cameraToWorldMatrix);
@@ -95,15 +101,6 @@ public class CloudRaymarchingCamera : MonoBehaviour
         ppLayer.antialiasingMode = taaToggle.isOn ? PostProcessLayer.Antialiasing.TemporalAntialiasing : PostProcessLayer.Antialiasing.None;
 
         raymarchMat.SetVector("_Index", Index);
-
-        Matrix4x4 rotMatrix = Matrix4x4.TRS(
-            Vector3.one,
-            Quaternion.Euler(new Vector3(0, (Time.time * 100) % 360, (Time.time * 100) % 360)),
-            Vector3.one
-            );
-
-        raymarchMat.SetMatrix("_RotationMat", rotMatrix.inverse);
-
 
         RenderTexture.active = destination;
         raymarchMat.SetTexture("_Background", source);
