@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 [RequireComponent(typeof(Camera))]
 [ExecuteInEditMode]
-public class CloudRaymarchingCamera : MonoBehaviour
+public class CloudRaymarchingCamera : SceneViewFilter
 {
     [Header("UI")]
     [SerializeField] private Slider sunSpeedSlider = null;
