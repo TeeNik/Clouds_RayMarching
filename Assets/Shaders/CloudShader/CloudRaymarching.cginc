@@ -111,10 +111,10 @@ float sampleDensity(float3 pos, PerlinInfo perlinInfo, CubeInfo cube)
     fixed4 col = tex3D(perlinInfo.noise, normalizedPos);
     return col.x;
 
-    return PerlinNormal(normalizedPos, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset, perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence);
+    return PerlinNormal(pos, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset, perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence);
 }
 
-float4 march(float3 ro, float3 roJittered, float3 rd, float3 lightDir, CubeInfo cubeInfo, PerlinInfo perlinInfo, CloudInfo cloudInfo, SphereInfo sphereInfo)
+float4 march(float3 ro, float3 roJittered, float3 rd, float3 lightDir, float depth, CubeInfo cubeInfo, PerlinInfo perlinInfo, CloudInfo cloudInfo, SphereInfo sphereInfo)
 {
     float3 t1 = float3(0.0, 0.0, 0.0);
     float distToBox, distInsideBox;
@@ -152,7 +152,7 @@ float4 march(float3 ro, float3 roJittered, float3 rd, float3 lightDir, CubeInfo 
             {
                 float toLightSample = sampleDensity(lightRayPos, perlinInfo, cubeInfo);
                 accumToLight += (toLightSample * marchStepSizeToLight);
-
+            
                 lightRayPos += (lightDir * marchStepSizeToLight);
             }
 
@@ -163,6 +163,12 @@ float4 march(float3 ro, float3 roJittered, float3 rd, float3 lightDir, CubeInfo 
 
             lightEnergy += (absorbedLight * transmittance);
             transmittance *= (1.0 - cloudDensity);
+
+            if (transmittance < 0.1)
+            {
+                transmittance = 0;
+                break;
+            }
         }
 
         t1 += (rd * marchStepSize);

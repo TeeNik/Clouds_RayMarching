@@ -151,7 +151,7 @@ Shader "Custom/CloudShader"
 				//fixed4 col = tex3D(_Volume, pos);
 				//return half4(col.xyz, 1);
 
-				float4 o = march(ro, roJittered, rd, lightDir, cubeInfo, perlinInfo, cloudInfo, sphereInfo);
+				float4 o = march(ro, roJittered, rd, lightDir, 0, cubeInfo, perlinInfo, cloudInfo, sphereInfo);
 				return half4(o.rgba);
 			}
 
