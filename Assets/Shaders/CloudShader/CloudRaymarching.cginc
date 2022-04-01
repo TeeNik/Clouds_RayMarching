@@ -30,6 +30,7 @@ struct PerlinInfo
 
 struct CloudInfo
 {
+    int marchSteps;
     float density;
     float absortion;
 };
@@ -135,6 +136,11 @@ float4 march(float3 ro, float3 roJittered, float3 rd, float3 lightDir, float dep
 
     for (int i = 0; i < MarchSteps; ++i)
     {
+        if (length(t1 - ro) >= depth)
+        {
+            return(0, 0, 0, 0);
+        }
+
         float fromCamSample = sampleDensity(t1, perlinInfo, cubeInfo);
 
         if (fromCamSample > 0.01)
