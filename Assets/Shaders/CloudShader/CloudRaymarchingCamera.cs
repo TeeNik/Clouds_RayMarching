@@ -25,6 +25,7 @@ public class CloudRaymarchingCamera : SceneViewFilter
 
     public Vector3 Index;
     public Shader Shader;
+    public Color CloudColor;
     private Material raymarchMat;
 
     private Camera _camera;
@@ -98,6 +99,7 @@ public class CloudRaymarchingCamera : SceneViewFilter
         raymarchMat.SetFloat(absortionId, absortionSlider.value);
         raymarchMat.SetInt(jitterId, (int)jitterSlider.value);
         raymarchMat.SetFloat(frameCountId, Time.frameCount);
+        raymarchMat.SetVector("_CloudColor", CloudColor.linear);
         ppLayer.antialiasingMode = taaToggle.isOn ? PostProcessLayer.Antialiasing.TemporalAntialiasing : PostProcessLayer.Antialiasing.None;
 
         raymarchMat.SetVector("_Index", Index);

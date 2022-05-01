@@ -30,9 +30,10 @@ struct PerlinInfo
 
 struct CloudInfo
 {
-    int marchSteps;
     float density;
     float absortion;
+    float3 cloudColor;
+    float3 shadowColor;
 };
 
 float IGN(float2 screenXy)
@@ -180,7 +181,7 @@ float4 march(float3 ro, float3 roJittered, float3 rd, float3 lightDir, float dep
         t1 += (rd * marchStepSize);
     }
 
-    return float4(lightEnergy.rgb, 1.0 - transmittance);
+    return float4(lightEnergy.rgb * cloudInfo.cloudColor, 1.0 - transmittance);
 }
 
 //march sphere

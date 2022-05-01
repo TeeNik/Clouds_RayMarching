@@ -4,6 +4,8 @@ Shader "Custom/CloudShaderCamera"
 	{
 		_Density("Density", Range(0.0, 1.0)) = 0.04
 		_Absortion("Absortion", Range(0.0, 20.0)) = 20.0
+		_CloudColor("CloudColor", Vector) = (1.0, 1.0, 1.0)
+		_ShadowColor("ShadowColor", Vector) = (0.0, 0.0, 0.0)
 
 		_Coverage("Coverage", Range(0.0, 1.0)) = 0.42
 		_Octaves("Octaves", Range(1, 8)) = 8
@@ -59,6 +61,8 @@ Shader "Custom/CloudShaderCamera"
 
 			float _Density;
 			float _Absortion;
+			float3 _CloudColor;
+			float3 _ShadowColor;
 
 			float _Coverage;
 			int _Octaves;
@@ -153,6 +157,8 @@ Shader "Custom/CloudShaderCamera"
 				CloudInfo cloudInfo;
 				cloudInfo.density = _Density;
 				cloudInfo.absortion = _Absortion;
+				cloudInfo.cloudColor = _CloudColor;
+				cloudInfo.shadowColor = _ShadowColor;
 
 				//float n = GetWorleyNoise3D(i.wPos);
 				//n = fbm(i.wPos * 10);
