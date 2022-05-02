@@ -20,18 +20,18 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _Volume:
-        m_Texture: {fileID: 11700000, guid: 9b83d08922a540441824af7e87d45ed9, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
     - _Absortion: 1
     - _Amplitude: 0.5
-    - _Coverage: 0.4669773
+    - _Coverage: 0.474
     - _DarknessThreshold: 0.1
-    - _Density: 1.140448
+    - _Density: 1
     - _DensityScale: 0.0005
-    - _FrameCount: 5605
+    - _FrameCount: 253641
     - _Frequency: 1
     - _JitterEnabled: 1
     - _Lacunarity: 3
@@ -45,6 +45,9 @@ Material:
     - _StepSize: 0.02
     - _Transmittance: 1
     m_Colors:
-    - _Offset: {r: 0.1, g: 0, b: 0, a: 0}
+    - _Color: {r: 0, g: 1, b: 0, a: 0}
+    - _CubeMaxBound: {r: 4.01, g: 2.5, b: 2.5, a: 0}
+    - _CubeMinBound: {r: -0.99, g: -2.5, b: -2.5, a: 0}
+    - _Offset: {r: 0.4, g: 0, b: 0, a: 0}
     - _SpherePos: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []

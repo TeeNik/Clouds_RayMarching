@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.4425083, g: 0.49159265, b: 0.5714309, a: 1}
+  m_IndirectSpecularColor: {r: 0.4425069, g: 0.4915908, b: 0.5714277, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -1580,7 +1580,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 906476364}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 2.07, y: -2.92, z: 1.14}
   m_LocalScale: {x: 2, y: 2, z: 2}
   m_Children: []
   m_Father: {fileID: 0}
@@ -1795,7 +1795,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1024390905}
-  m_LocalRotation: {x: 0.5061167, y: 0.41283906, z: -0.69500184, w: 0.30063653}
+  m_LocalRotation: {x: 0.01996972, y: -0.5105784, z: 0.85951746, w: 0.011865834}
   m_LocalPosition: {x: 0, y: 3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
@@ -2655,7 +2655,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1493652318}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 948f4100a11a5c24981795d21301da5c, type: 3}
   m_Name: 
@@ -2715,7 +2715,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1493652318}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b9a305e18de0c04dbd257a21cd47087, type: 3}
   m_Name: 
@@ -2732,7 +2732,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1493652318}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 47ef7da46a905364787d54d403c080b5, type: 3}
   m_Name: 
@@ -2766,7 +2766,7 @@ MonoBehaviour:
   Resolution: 128
   ComputeShader: {fileID: 7200000, guid: a2804afde80a40341b8ab4a6426c93a6, type: 3}
   KernelName: CSMain
-  AssetName: Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_Texture
+  AssetName: Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_Texture
   Slicer: {fileID: 7200000, guid: 80e0787c402884c47ad1a5f34c3beb36, type: 3}
   Coverage: 0.45
   Octaves: 4
@@ -3458,7 +3458,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1780642985
 MonoBehaviour:
   m_ObjectHideFlags: 0
