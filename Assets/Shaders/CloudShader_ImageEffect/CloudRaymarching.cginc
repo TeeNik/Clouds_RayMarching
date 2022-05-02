@@ -14,6 +14,9 @@ struct CubeInfo
     float3 minBound;
     float3 maxBound;
     float3 index;
+
+    float scale;
+    float3 percentIndex;
 };
 
 struct PerlinInfo

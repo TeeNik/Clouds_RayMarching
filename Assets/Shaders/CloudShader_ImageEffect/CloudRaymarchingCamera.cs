@@ -26,6 +26,7 @@ public class CloudRaymarchingCamera : SceneViewFilter
     public Vector3 Index;
     public Shader Shader;
     public Color CloudColor;
+    public float NoiseScale;
     private Material raymarchMat;
 
     private Camera _camera;
@@ -52,6 +53,9 @@ public class CloudRaymarchingCamera : SceneViewFilter
     private readonly int jitterId = Shader.PropertyToID("_JitterEnabled");
     private readonly int frameCountId = Shader.PropertyToID("_FrameCount");
 
+    private readonly int cloudColorId = Shader.PropertyToID("_CloudColor");
+    private readonly int noiseScaleId = Shader.PropertyToID("_NoiseScale");
+
     private void Start()
     {
         raymarchMat = new Material(Shader);
@@ -60,6 +64,11 @@ public class CloudRaymarchingCamera : SceneViewFilter
         {
             Texture3D noiseTexture = textureGenerator.Generate();
             raymarchMat.SetTexture("_Volume", noiseTexture);
+
+            textureGenerator.OnSettingsChanged += (tex) =>
+            {
+                raymarchMat.SetTexture("_Volume", tex);
+            };
         }
     }
 
@@ -99,8 +108,10 @@ public class CloudRaymarchingCamera : SceneViewFilter
         raymarchMat.SetFloat(absortionId, absortionSlider.value);
         raymarchMat.SetInt(jitterId, (int)jitterSlider.value);
         raymarchMat.SetFloat(frameCountId, Time.frameCount);
-        raymarchMat.SetVector("_CloudColor", CloudColor.linear);
         ppLayer.antialiasingMode = taaToggle.isOn ? PostProcessLayer.Antialiasing.TemporalAntialiasing : PostProcessLayer.Antialiasing.None;
+
+        raymarchMat.SetVector(cloudColorId, CloudColor.linear);
+        raymarchMat.SetFloat(noiseScaleId, NoiseScale);
 
         raymarchMat.SetVector("_Index", Index);
 

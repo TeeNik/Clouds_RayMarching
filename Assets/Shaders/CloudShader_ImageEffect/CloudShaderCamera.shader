@@ -4,8 +4,10 @@ Shader "Custom/CloudShaderCamera"
 	{
 		_Density("Density", Range(0.0, 1.0)) = 0.04
 		_Absortion("Absortion", Range(0.0, 20.0)) = 20.0
+
 		_CloudColor("CloudColor", Vector) = (1.0, 1.0, 1.0)
 		_ShadowColor("ShadowColor", Vector) = (0.0, 0.0, 0.0)
+		_NoiseScale("NoiseScale", float) = 1.0
 
 		_Coverage("Coverage", Range(0.0, 1.0)) = 0.42
 		_Octaves("Octaves", Range(1, 8)) = 8
@@ -61,8 +63,10 @@ Shader "Custom/CloudShaderCamera"
 
 			float _Density;
 			float _Absortion;
+
 			float3 _CloudColor;
 			float3 _ShadowColor;
+			float _NoiseScale;
 
 			float _Coverage;
 			int _Octaves;
@@ -164,7 +168,7 @@ Shader "Custom/CloudShaderCamera"
 				//n = fbm(i.wPos * 10);
 				//return half4(n, n, n, 1);
 
-				//float n = (WorleyNormal(i.wPos, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset,
+				//float n = (PerlinNormal(float3(i.uv, 0) * 1.77 * _NoiseScale, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset,
 				//	perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence)) * 0.5;
 				//n -= fbm(i.wPos * 10) * 0.105;
 				//return half4(n, n, n, 1);

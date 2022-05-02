@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.4425069, g: 0.4915908, b: 0.5714277, a: 1}
+  m_IndirectSpecularColor: {r: 0.44249317, g: 0.4915719, b: 0.5714158, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -1795,7 +1795,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1024390905}
-  m_LocalRotation: {x: 0.01996972, y: -0.5105784, z: 0.85951746, w: 0.011865834}
+  m_LocalRotation: {x: 0.8018578, y: 0.1840862, z: -0.3096385, w: 0.47671834}
   m_LocalPosition: {x: 0, y: 3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
@@ -2411,11 +2411,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 07203d9df934998479b2b9acb6a0b5e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Resolution: 128
   ComputeShader: {fileID: 7200000, guid: a2804afde80a40341b8ab4a6426c93a6, type: 3}
   KernelName: CSMain
   AssetName: ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_Texture
   Slicer: {fileID: 7200000, guid: 80e0787c402884c47ad1a5f34c3beb36, type: 3}
+  Settings:
+    Resolution: 0
+    Coverage: 0
+    Octaves: 0
+    Frequency: 0
+    Lacunarity: 0
+    Amplitude: 0
+    Persistence: 0
+    Index: {x: 0, y: 0, z: 0}
+  Resolution: 128
   Coverage: 0.52
   Octaves: 4
   Frequency: 1
@@ -2642,7 +2651,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1493652318}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -7}
+  m_LocalPosition: {x: 0, y: 0, z: -16.2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -2750,6 +2759,8 @@ MonoBehaviour:
   textureGenerator: {fileID: 1493652325}
   Index: {x: 0, y: 0, z: 0}
   Shader: {fileID: 4800000, guid: a28f2de7fb7290a4c85ca2b8ca48fc5e, type: 3}
+  CloudColor: {r: 0.8443396, g: 0.964512, b: 1, a: 0}
+  NoiseScale: 1
   MaxDistance: 10000
 --- !u!114 &1493652325
 MonoBehaviour:
@@ -2763,12 +2774,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 07203d9df934998479b2b9acb6a0b5e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Resolution: 128
   ComputeShader: {fileID: 7200000, guid: a2804afde80a40341b8ab4a6426c93a6, type: 3}
   KernelName: CSMain
-  AssetName: Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_Texture
+  AssetName: Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_Clouds_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_Texture
   Slicer: {fileID: 7200000, guid: 80e0787c402884c47ad1a5f34c3beb36, type: 3}
-  Coverage: 0.45
+  Settings:
+    Resolution: 128
+    Coverage: 0.42
+    Octaves: 4
+    Frequency: 1
+    Lacunarity: 3
+    Amplitude: 0.5
+    Persistence: 0.5
+    Index: {x: 1, y: 0, z: 0}
+  Resolution: 128
+  Coverage: 0.42
   Octaves: 4
   Frequency: 1
   Lacunarity: 3
@@ -3573,11 +3593,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 07203d9df934998479b2b9acb6a0b5e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Resolution: 128
   ComputeShader: {fileID: 7200000, guid: a2804afde80a40341b8ab4a6426c93a6, type: 3}
   KernelName: CSMain
   AssetName: ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_ComputeShaderTest_Texture
   Slicer: {fileID: 7200000, guid: 80e0787c402884c47ad1a5f34c3beb36, type: 3}
+  Settings:
+    Resolution: 0
+    Coverage: 0
+    Octaves: 0
+    Frequency: 0
+    Lacunarity: 0
+    Amplitude: 0
+    Persistence: 0
+    Index: {x: 0, y: 0, z: 0}
+  Resolution: 128
   Coverage: 0.52
   Octaves: 4
   Frequency: 1
