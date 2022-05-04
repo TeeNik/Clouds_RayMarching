@@ -56,7 +56,7 @@ public class CloudRaymarchingCamera : SceneViewFilter
     private readonly int cloudColorId = Shader.PropertyToID("_CloudColor");
     private readonly int noiseScaleId = Shader.PropertyToID("_NoiseScale");
 
-    private void Start()
+    private void OnEnable()
     {
         raymarchMat = new Material(Shader);
 
