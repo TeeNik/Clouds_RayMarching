@@ -19,7 +19,7 @@ uniform float3 Offset;
 
 float GetNoise(float3 pos)
 {
-    //return WorleyNormal(pos, Coverage, Octaves, Offset, Frequency, Amplitude, Lacunarity, Persistence);
+    return WorleyNormal(pos, Coverage, Octaves, Offset, Frequency, Amplitude, Lacunarity, Persistence);
     return PerlinNormal(pos, Coverage, Octaves, Offset, Frequency, Amplitude, Lacunarity, Persistence);
 }
 
