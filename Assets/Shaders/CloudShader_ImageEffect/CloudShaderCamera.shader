@@ -101,6 +101,7 @@ Shader "Custom/CloudShaderCamera"
 				float4 vertex : SV_POSITION;
 				float2 uv : TEXCOORD0;
 				float3 ray : TEXCOORD1;
+				float4 worldPos : TEXCOORD2;
 			};
 
 			v2f vert(appdata v)
@@ -114,6 +115,8 @@ Shader "Custom/CloudShaderCamera"
 				o.ray = _CamFrustum[(int)index].xyz;
 				o.ray /= abs(o.ray.z);
 				o.ray = mul(_CamToWorld, o.ray);
+
+				o.worldPos = mul(unity_ObjectToWorld, v.vertex);
 
 				return o;
 			}
@@ -163,6 +166,11 @@ Shader "Custom/CloudShaderCamera"
 				cloudInfo.absortion = _Absortion;
 				cloudInfo.cloudColor = _CloudColor;
 				cloudInfo.shadowColor = _ShadowColor;
+
+				//float n = worleyFbm(float3(i.uv, 0) * 1, 5);
+				//float pfbm = lerp(1., perlinfbm(float3(i.uv * 1., 0), 4., 7), .5);
+				//n = abs(pfbm * 2. - 1.); // billowy perlin noise
+				//return half4(n, n, n, 1);
 
 				//float n = GetWorleyNoise3D(i.wPos);
 				//n = fbm(i.wPos * 10);

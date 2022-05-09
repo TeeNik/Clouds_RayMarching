@@ -147,9 +147,9 @@ Shader "Custom/CloudShader"
 				//return half4(n, n, n, 1);
 
 
-				//float3 pos = (i.wPos - _CubeMinBound) / (_CubeMaxBound - _CubeMinBound);
-				//fixed4 col = tex3D(_Volume, pos);
-				//return half4(col.xyz, 1);
+				float3 pos = (i.wPos - _CubeMinBound) / (_CubeMaxBound - _CubeMinBound);
+				fixed4 col = tex3D(_Volume, pos);
+				return half4(col.xyz, 1);
 
 				float4 o = march(ro, roJittered, rd, lightDir, 10000, cubeInfo, perlinInfo, cloudInfo, sphereInfo);
 				return half4(o.rgba);

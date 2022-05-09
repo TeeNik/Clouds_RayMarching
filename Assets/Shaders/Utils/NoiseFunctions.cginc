@@ -26,7 +26,7 @@ float fbm(float3 x) {
 
 float pattern(in float3 p, float timeScale)
 {
-	float t = timeScale;
+	float t = /* _Time.y * */timeScale;
 	float3 q = float3(fbm(p + float3(0.0, 0.0, 0.0) + t), fbm(p + float3(5.2, 1.3, 4.1) + t), fbm(p + float3(2.2, 5.7, 1.8) + t));
 
 	float3 r = float3(fbm(p + 4.0 * q + float3(1.7, 9.2, 3.7)),

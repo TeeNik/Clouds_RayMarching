@@ -1,7 +1,8 @@
-﻿#include "Perlin3D.cginc"
-#include "WorleyNoise.cginc"
-#include "../DistanceFunctions.cginc"
-#include "../NoiseFunctions.cginc"
+﻿#include "../Utils/Perlin3D.cginc"
+#include "../Utils/WorleyNoise.cginc"
+#include "../Utils/DistanceFunctions.cginc"
+#include "../Utils/NoiseFunctions.cginc"
+#include "../Utils/TileablePerlinWorleyNoise.cginc"
 
 struct SphereInfo
 {
@@ -113,9 +114,11 @@ float sampleDensity(float3 pos, PerlinInfo perlinInfo, CubeInfo cube)
     //}
 
     float3 normalizedPos = (pos - cube.minBound) / (cube.maxBound - cube.minBound) + cube.index;
+    normalizedPos = pos;
     fixed4 col = tex3D(perlinInfo.noise, normalizedPos);
     return col.x;
-
+    
+    return perlinfbm(normalizedPos, perlinInfo.freq, perlinInfo.octaves);
     return PerlinNormal(pos, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset, perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence);
 }
 
@@ -146,6 +149,7 @@ float4 march(float3 ro, float3 roJittered, float3 rd, float3 lightDir, float dep
         }
 
         float fromCamSample = sampleDensity(t1, perlinInfo, cubeInfo);
+        //return float4(fromCamSample, fromCamSample, fromCamSample, 1);
 
         if (fromCamSample > 0.01)
         {

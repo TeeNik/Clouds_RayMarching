@@ -6,10 +6,9 @@ public class TextureGenerator : MonoBehaviour
 {
     public ComputeShader ComputeShader;
     public string KernelName;
-    public string AssetName;
     public ComputeShader Slicer;
 
-    private RenderTexture Texture;
+    protected RenderTexture Texture;
     private const int threadGroupSize = 32;
 
     public NoiseSettings Settings;
@@ -34,7 +33,7 @@ public class TextureGenerator : MonoBehaviour
         IsSettingsChanged();
     }
 
-    public Texture3D Generate()
+    public virtual Texture3D Generate()
     {
         CreateRenderTexture();
         int kernel = ComputeShader.FindKernel(KernelName);
@@ -80,8 +79,6 @@ public class TextureGenerator : MonoBehaviour
 
     protected Texture3D SaveAsset()
     {
-        string sceneName = UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene().name;
-        AssetName = sceneName + "_" + AssetName;
         Texture2D[] slices = new Texture2D[Settings.Resolution];
 
         int kernel = Slicer.FindKernel("CSMain");

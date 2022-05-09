@@ -1,9 +1,10 @@
 #pragma kernel CSMain
 
-#include "Random.cginc"
-#include "Perlin3D.cginc"
-#include "WorleyNoise.cginc"
-#include "NoiseFunctions.cginc"
+#include "../Utils/Random.cginc"
+#include "../Utils/Perlin3D.cginc"
+#include "../Utils/WorleyNoise.cginc"
+#include "../Utils/NoiseFunctions.cginc"
+#include "../Utils/TileablePerlinWorleyNoise.cginc"
 
 RWTexture3D<float4> Result;
 uniform uint Resolution;
@@ -19,7 +20,12 @@ uniform float3 Offset;
 
 float GetNoise(float3 pos)
 {
-    return WorleyNormal(pos, Coverage, Octaves, Offset, Frequency, Amplitude, Lacunarity, Persistence);
+    //return worleyFbm(pos, Frequency) * .125;
+    float pfbm = lerp(1., perlinfbm(pos, Frequency, Octaves), .5);
+    return PerlinTilled(pos, Coverage, Octaves, Offset, Frequency, Amplitude, Lacunarity, Persistence);
+
+    //return perlinfbm(pos, Frequency, Octaves);
+    //return WorleyNormal(pos, Coverage, Octaves, Offset, Frequency, Amplitude, Lacunarity, Persistence);
     return PerlinNormal(pos, Coverage, Octaves, Offset, Frequency, Amplitude, Lacunarity, Persistence);
 }
 

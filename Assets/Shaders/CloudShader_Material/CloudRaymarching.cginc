@@ -1,7 +1,7 @@
-﻿#include "Perlin3D.cginc"
-#include "WorleyNoise.cginc"
-#include "../DistanceFunctions.cginc"
-#include "../NoiseFunctions.cginc"
+﻿#include "../Utils/Perlin3D.cginc"
+#include "../Utils/WorleyNoise.cginc"
+#include "../Utils/DistanceFunctions.cginc"
+#include "../Utils/NoiseFunctions.cginc"
 
 struct SphereInfo
 {
