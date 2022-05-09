@@ -34,7 +34,7 @@ Shader "TeeNik/RaymarchingShader"
 			#pragma target 3.0
 
             #include "UnityCG.cginc"
-			#include "../DistanceFunctions.cginc"
+			#include "../Utils/DistanceFunctions.cginc"
 
 			sampler2D _MainTex;
 

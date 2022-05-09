@@ -35,8 +35,8 @@ Shader "TeeNik/WaterShaderProf"
 			#pragma target 3.0
 
             #include "UnityCG.cginc"
-			#include "../DistanceFunctions.cginc"
-			#include "../NoiseFunctions.cginc"
+			#include "../Utils/DistanceFunctions.cginc"
+			#include "../Utils/NoiseFunctions.cginc"
 
 			sampler2D _MainTex;
 			sampler2D _ConcreteTexture;
