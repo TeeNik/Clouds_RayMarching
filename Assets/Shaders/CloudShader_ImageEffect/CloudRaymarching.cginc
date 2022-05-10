@@ -14,22 +14,17 @@ struct CubeInfo
 {
     float3 minBound;
     float3 maxBound;
-    float3 index;
-
-    float scale;
-    float3 percentIndex;
 };
 
 struct PerlinInfo
 {
-    float3 offset;
     int octaves;
     float cutOff;
     float freq;
     float amp;
     float lacunarity;
     float persistence;
-    sampler3D noise;
+    float3 offset;
 };
 
 struct CloudInfo
@@ -38,6 +33,8 @@ struct CloudInfo
     float absortion;
     float3 cloudColor;
     float3 shadowColor;
+    sampler3D volume;
+    float3 offset;
 };
 
 float IGN(float2 screenXy)
@@ -84,38 +81,17 @@ bool rayBoxDst(float3 boundsMin, float3 boundsMax, float3 rayOrigin, float3 invR
     return dstA <= dstB;
 }
 
-float sampleDensity(float3 pos, PerlinInfo perlinInfo, CubeInfo cube)
+float sampleDensity(float3 pos, PerlinInfo perlinInfo, CloudInfo cloudInfo, CubeInfo cube, SphereInfo sphere)
 {
-    float iTime = _Time.y * 1;
-    //float noise = PerlinNormal(pos, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset,
-    //    perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence);
-    //float worley = (WorleyNormal(pos, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset,
-    //    perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence)) * 0.5;
-    //return worley - fbm(pos * 20) * 0.35;
+    float3 normalizedPos = (pos - cube.minBound) / (cube.maxBound - cube.minBound);
+    normalizedPos = pos + cloudInfo.offset;
+    fixed4 col = tex3D(cloudInfo.volume, normalizedPos);
 
-    //float sdfValue = sdSphere(pos, 1.5f) - fbm(pos * 10) * 0.5;
-    //return sdfValue < 0.01 ? 0.2f : 0.0f;
-
-    //sdfValue = sdSmoothUnion(sdfValue, sdSphere(pos - float3(8.0, 8.0 + 12.0 * cos(iTime), 3), 5.6), 3.0f);
-    //sdfValue = sdSmoothUnion(sdfValue, sdSphere(pos - float3(5.0 * sin(iTime), 3.0, 0), 8.0), 3.0) + 7.0 * noise;
-    //sdfValue = sdSmoothUnion(sdfValue, sdPlane(pos + float3(0, 0.4, 0)), 22.0);
-    //
-    ////float sdfValue = sdSphere(pos, float3(5.0 * sin(iTime), 3.0, 0), 8.0) + 7.0 * fbm_4(fbmCoord / 3.2);
-    ////float sphere = sdSphere(pos - _Sphere.xyz, _Sphere.w);
-    //return sdfValue;
-    //
-    //
-    //float cl = sdCappedCylinder(sphereInfo.pos - pos, 10, 1);
-    //float tr = sdTorus(sphereInfo.pos - pos, float2(1.0, 0.5));
-    //if(tr < 0.01)
-    //{
-    //    return 0.00;
-    //
-    //}
-
-    float3 normalizedPos = (pos - cube.minBound) / (cube.maxBound - cube.minBound) + cube.index;
-    normalizedPos = pos + perlinInfo.offset;
-    fixed4 col = tex3D(perlinInfo.noise, normalizedPos);
+    float dist = length(pos - sphere.pos) / max(sphere.radius,0.001);
+    if (dist < 1.0)
+    {
+        col *= smoothstep(0.6, 1.0, dist);
+    }
     return col.x;
     
     return perlinfbm(normalizedPos, perlinInfo.freq, perlinInfo.octaves);
@@ -132,7 +108,7 @@ float4 march(float3 ro, float3 roJittered, float3 rd, float3 lightDir, float dep
         return float4(0.0, 0.0, 0.0, 0.0);
 
     t1 = ro + rd * distToBox;
-    const int MarchSteps = 32;
+    const int MarchSteps = 64;
     const int LightSteps = 8;
     float marchStepSize = distInsideBox / (float)MarchSteps;
 
@@ -149,8 +125,7 @@ float4 march(float3 ro, float3 roJittered, float3 rd, float3 lightDir, float dep
             return(0, 0, 0, 0);
         }
 
-        float fromCamSample = sampleDensity(t1, perlinInfo, cubeInfo);
-        //return float4(fromCamSample, fromCamSample, fromCamSample, 1);
+        float fromCamSample = sampleDensity(t1, perlinInfo, cloudInfo, cubeInfo, sphereInfo);
 
         if (fromCamSample > 0.01)
         {
@@ -158,6 +133,10 @@ float4 march(float3 ro, float3 roJittered, float3 rd, float3 lightDir, float dep
             float distInsideSphereToLight = 0.0;
 
             rayBoxDst(cubeInfo.minBound, cubeInfo.maxBound, t1, 1/lightDir, t2, distInsideSphereToLight);
+            
+            //MarchSteps is used instead of LightSteps intentionally.
+            //Small steps five much prettier result.
+            //Maybe I can replace it with occlusion shadow later.
             float marchStepSizeToLight = distInsideSphereToLight / (float)MarchSteps;
 
             float3 lightRayPos = t1;
@@ -165,7 +144,7 @@ float4 march(float3 ro, float3 roJittered, float3 rd, float3 lightDir, float dep
 
             for (int j = 0; j < LightSteps; ++j)
             {
-                float toLightSample = sampleDensity(lightRayPos, perlinInfo, cubeInfo);
+                float toLightSample = sampleDensity(lightRayPos, perlinInfo, cloudInfo, cubeInfo, sphereInfo);
                 accumToLight += (toLightSample * marchStepSizeToLight);
             
                 lightRayPos += (lightDir * marchStepSizeToLight);
@@ -191,68 +170,3 @@ float4 march(float3 ro, float3 roJittered, float3 rd, float3 lightDir, float dep
 
     return float4(lightEnergy.rgb * cloudInfo.cloudColor, 1.0 - transmittance);
 }
-
-//march sphere
-/*
-float4 march(float3 ro, float3 roJittered, float3 rd, float3 lightDir, SphereInfo sphereInfo, PerlinInfo perlinInfo, CloudInfo cloudInfo)
-{
-    float s = sphereInfo.pos;
-    float r = sphereInfo.radius;
-
-    float3 t1 = float3(0.0, 0.0, 0.0);
-    float3 t2 = float3(0.0, 0.0, 0.0);
-
-    bool intersectsSphere = raySphereIntersection(ro, rd, s, r, t1, t2);
-
-    if (!intersectsSphere)
-        return float4(0.0, 0.0, 0.0, 0.0);
-
-    const int MarchSteps = 8;
-    float distInsideSphere = distance(t1, t2);
-    float marchStepSize = distInsideSphere / (float)MarchSteps;
-
-    float3 jitter = roJittered - ro;
-    t1 += jitter * marchStepSize;
-
-    float3 lightEnergy = float3(0.0f, 0.0f, 0.0f);
-    float transmittance = 1.0;
-
-    for (int i = 0; i < MarchSteps; ++i)
-    {
-        float fromCamSample = PerlinNormal(t1, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset, perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence);
-
-        if (fromCamSample > 0.01)
-        {
-            float3 t3 = 0.0;
-            float3 t4 = 0.0;
-
-            raySphereIntersection(t1, lightDir, s, r, t3, t4);
-            float distInsideSphereToLight = distance(t1, t4);
-            float marchStepSizeToLight = distInsideSphereToLight / (float)MarchSteps;
-
-            float3 lightRayPos = t1;
-            float accumToLight = 0.0;
-
-            for (int j = 0; j < MarchSteps; ++j)
-            {
-                float toLightSample = PerlinNormal(lightRayPos, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset, perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence);
-                accumToLight += (toLightSample * marchStepSizeToLight);
-
-                lightRayPos += (lightDir * marchStepSizeToLight);
-            }
-
-            float cloudDensity = saturate(fromCamSample * cloudInfo.density);
-
-            float atten = exp(-accumToLight * cloudInfo.absortion);
-            float3 absorbedLight = atten * cloudDensity;
-
-            lightEnergy += (absorbedLight * transmittance);
-            transmittance *= (1.0 - cloudDensity);
-        }
-
-        t1 += (rd * marchStepSize);
-    }
-
-    return float4(lightEnergy.rgb, 1.0 - transmittance);
-}
-*/

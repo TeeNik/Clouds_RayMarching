@@ -7,7 +7,6 @@ Shader "Custom/CloudShaderCamera"
 
 		_CloudColor("CloudColor", Vector) = (1.0, 1.0, 1.0)
 		_ShadowColor("ShadowColor", Vector) = (0.0, 0.0, 0.0)
-		_NoiseScale("NoiseScale", float) = 1.0
 
 		_Coverage("Coverage", Range(0.0, 1.0)) = 0.42
 		_Octaves("Octaves", Range(1, 8)) = 8
@@ -16,14 +15,7 @@ Shader "Custom/CloudShaderCamera"
 		_Lacunarity("Lacunarity", Float) = 3.0
 
 		_Volume("Volume", 3D) = "white" {}
-		_Index("Index", Vector) = (0.0, 0.0, 0.0)
 
-		[HideInInspector] _SphereRadius("SphereRadius", Float) = 0.5
-		[HideInInspector] _SpherePos("SpherePos", Vector) = (0.0, 0.0, 0.0)
-						   
-		[HideInInspector] _CubeMinBound("CubeMinBound", Vector) = (0.0, 0.0, 0.0)
-		[HideInInspector] _CubeMaxBound("CubeMaxBound", Vector) = (0.0, 0.0, 0.0)
-						   
 		[HideInInspector] _JitterEnabled("JitterEnabled", Range(0, 1)) = 1
 		[HideInInspector] _FrameCount("FrameCount", Int) = 0.0
 						 
@@ -64,7 +56,6 @@ Shader "Custom/CloudShaderCamera"
 
 			float3 _CloudColor;
 			float3 _ShadowColor;
-			float _NoiseScale;
 
 			float _Coverage;
 			int _Octaves;
@@ -77,7 +68,6 @@ Shader "Custom/CloudShaderCamera"
 
 			sampler3D _Volume;
 			sampler2D _MainTex;
-			float3 _Index;
 
 			float _SphereRadius;
 			float3 _SpherePos;
@@ -105,7 +95,6 @@ Shader "Custom/CloudShaderCamera"
 			v2f vert(appdata v)
 			{
 				v2f o;
-				half index = v.vertex.z;
 				v.vertex.z = 0.1;
 				o.vertex = UnityObjectToClipPos(v.vertex);
 				o.uv = v.uv;
@@ -139,18 +128,15 @@ Shader "Custom/CloudShaderCamera"
 				CubeInfo cubeInfo;
 				cubeInfo.minBound = _CubeMinBound;
 				cubeInfo.maxBound = _CubeMaxBound;
-				cubeInfo.index = _Index;
 
 				// perlin noise
 				PerlinInfo perlinInfo;
 				perlinInfo.cutOff = 1.0 - _Coverage;
 				perlinInfo.octaves = _Octaves;
-				perlinInfo.offset = _Offset * _Time.y;
 				perlinInfo.freq = _Frequency;
 				perlinInfo.amp = _Amplitude;
 				perlinInfo.lacunarity = _Lacunarity;
 				perlinInfo.persistence = _Persistence;
-				perlinInfo.noise = _Volume;
 
 				// cloud
 				CloudInfo cloudInfo;
@@ -158,6 +144,8 @@ Shader "Custom/CloudShaderCamera"
 				cloudInfo.absortion = _Absortion;
 				cloudInfo.cloudColor = _CloudColor;
 				cloudInfo.shadowColor = _ShadowColor;
+				cloudInfo.offset = _Offset * _Time.y;
+				cloudInfo.volume = _Volume;
 
 				//float n = worleyFbm(float3(i.uv, 0) * 1, 5);
 				//float pfbm = lerp(1., perlinfbm(float3(i.uv * 1., 0), 4., 7), .5);
@@ -168,7 +156,7 @@ Shader "Custom/CloudShaderCamera"
 				//n = fbm(i.wPos * 10);
 				//return half4(n, n, n, 1);
 
-				//float n = (PerlinNormal(float3(i.uv, 0) * 1.77 * _NoiseScale, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset,
+				//float n = (PerlinNormal(float3(i.uv, 0) * 1.77, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset,
 				//	perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence)) * 0.5;
 				//n -= fbm(i.wPos * 10) * 0.105;
 				//return half4(n, n, n, 1);

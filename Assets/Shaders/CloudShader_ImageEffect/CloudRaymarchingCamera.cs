@@ -23,11 +23,10 @@ public class CloudRaymarchingCamera : SceneViewFilter
     [SerializeField] private Transform cube = null;
     [SerializeField] private TextureGenerator textureGenerator = null;
 
-    public Vector3 Index;
     public Vector3 Offset;
     public Shader Shader;
     public Color CloudColor;
-    public float NoiseScale;
+    public float SphereRadius = 0.1f;
     private Material raymarchMat;
 
     public Shader BlurShader;
@@ -59,7 +58,6 @@ public class CloudRaymarchingCamera : SceneViewFilter
     private readonly int frameCountId = Shader.PropertyToID("_FrameCount");
 
     private readonly int cloudColorId = Shader.PropertyToID("_CloudColor");
-    private readonly int noiseScaleId = Shader.PropertyToID("_NoiseScale");
 
     private void Start()
     {
@@ -105,7 +103,7 @@ public class CloudRaymarchingCamera : SceneViewFilter
         raymarchMat.SetFloat("_MaxDistance", MaxDistance);
 
         raymarchMat.SetVector(posId, sphere.position);
-        raymarchMat.SetFloat(radiusId, sphere.localScale.x * 0.5f);
+        raymarchMat.SetFloat(radiusId, SphereRadius);
         raymarchMat.SetVector(cubeMinBound, cube.position - cube.localScale * 0.5f);
         raymarchMat.SetVector(cubeMaxBound, cube.position + cube.localScale * 0.5f);
         raymarchMat.SetFloat(coverageId, coverageSlider.value);
@@ -116,9 +114,7 @@ public class CloudRaymarchingCamera : SceneViewFilter
         ppLayer.antialiasingMode = taaToggle.isOn ? PostProcessLayer.Antialiasing.TemporalAntialiasing : PostProcessLayer.Antialiasing.None;
 
         raymarchMat.SetVector(cloudColorId, CloudColor.linear);
-        raymarchMat.SetFloat(noiseScaleId, NoiseScale);
 
-        raymarchMat.SetVector("_Index", Index);
         raymarchMat.SetVector("_Offset", Offset);
 
         raymarchMat.SetTexture("_Background", source);
