@@ -132,7 +132,8 @@ float4 march(float3 ro, float3 roJittered, float3 rd, float3 lightDir, float dep
         return float4(0.0, 0.0, 0.0, 0.0);
 
     t1 = ro + rd * distToBox;
-    const int MarchSteps = 16;
+    const int MarchSteps = 32;
+    const int LightSteps = 8;
     float marchStepSize = distInsideBox / (float)MarchSteps;
 
     float3 jitter = roJittered - ro;
@@ -162,7 +163,7 @@ float4 march(float3 ro, float3 roJittered, float3 rd, float3 lightDir, float dep
             float3 lightRayPos = t1;
             float accumToLight = 0.0;
 
-            for (int j = 0; j < MarchSteps; ++j)
+            for (int j = 0; j < LightSteps; ++j)
             {
                 float toLightSample = sampleDensity(lightRayPos, perlinInfo, cubeInfo);
                 accumToLight += (toLightSample * marchStepSizeToLight);
