@@ -114,7 +114,7 @@ float sampleDensity(float3 pos, PerlinInfo perlinInfo, CubeInfo cube)
     //}
 
     float3 normalizedPos = (pos - cube.minBound) / (cube.maxBound - cube.minBound) + cube.index;
-    normalizedPos = pos;
+    normalizedPos = pos + perlinInfo.offset;
     fixed4 col = tex3D(perlinInfo.noise, normalizedPos);
     return col.x;
     
@@ -132,7 +132,7 @@ float4 march(float3 ro, float3 roJittered, float3 rd, float3 lightDir, float dep
         return float4(0.0, 0.0, 0.0, 0.0);
 
     t1 = ro + rd * distToBox;
-    const int MarchSteps = 8;
+    const int MarchSteps = 16;
     float marchStepSize = distInsideBox / (float)MarchSteps;
 
     float3 jitter = roJittered - ro;

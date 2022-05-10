@@ -145,7 +145,7 @@ Shader "Custom/CloudShaderCamera"
 				PerlinInfo perlinInfo;
 				perlinInfo.cutOff = 1.0 - _Coverage;
 				perlinInfo.octaves = _Octaves;
-				perlinInfo.offset = _Offset/* * _Time.y*/;
+				perlinInfo.offset = _Offset * _Time.y;
 				perlinInfo.freq = _Frequency;
 				perlinInfo.amp = _Amplitude;
 				perlinInfo.lacunarity = _Lacunarity;

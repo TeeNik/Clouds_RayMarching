@@ -24,6 +24,7 @@ public class CloudRaymarchingCamera : SceneViewFilter
     [SerializeField] private TextureGenerator textureGenerator = null;
 
     public Vector3 Index;
+    public Vector3 Offset;
     public Shader Shader;
     public Color CloudColor;
     public float NoiseScale;
@@ -118,6 +119,8 @@ public class CloudRaymarchingCamera : SceneViewFilter
         raymarchMat.SetFloat(noiseScaleId, NoiseScale);
 
         raymarchMat.SetVector("_Index", Index);
+        raymarchMat.SetVector("_Offset", Offset);
+
         raymarchMat.SetTexture("_Background", source);
 
         Graphics.Blit(source, destination, raymarchMat);
