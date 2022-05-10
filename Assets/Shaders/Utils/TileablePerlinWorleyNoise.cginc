@@ -116,6 +116,15 @@ float perlinfbm(float3 p, float freq, int octaves)
     return noise;
 }
 
+// Tileable Worley fbm inspired by Andrew Schneider's Real-Time Volumetric Cloudscapes
+// chapter in GPU Pro 7.
+float worleyFbm(float3 p, float freq)
+{
+    return worleyNoise(p * freq, freq) * .625 +
+        worleyNoise(p * freq * 2., freq * 2.) * .25 +
+        worleyNoise(p * freq * 4., freq * 4.) * .125;
+}
+
 float PerlinTilled(float3 p, float cutOff, int octaves, float3 offset, float frequency, float amplitude, float lacunarity, float persistence)
 {
     float sum = 0.0;
@@ -132,18 +141,30 @@ float PerlinTilled(float3 p, float cutOff, int octaves, float3 offset, float fre
         amplitude *= persistence;
     }
 
-    //sum = remap011(sum, 0.0, maxAmp);
+    //sum = remap01(sum, 0.0, maxAmp);
     sum = sum * step(cutOff, sum);
 
     return sum;
 }
 
-// Tileable Worley fbm inspired by Andrew Schneider's Real-Time Volumetric Cloudscapes
-// chapter in GPU Pro 7.
-float worleyFbm(float3 p, float freq)
+float WorleyTilled(float3 p, float cutOff, int octaves, float3 offset, float frequency, float amplitude, float lacunarity, float persistence)
 {
-    return worleyNoise(p * freq, freq) * .625 +
-        worleyNoise(p * freq * 2., freq * 2.) * .25 +
-        worleyNoise(p * freq * 4., freq * 4.) * .125;
-}
+    float sum = 0.0;
+    float maxAmp = 0.0;
 
+    for (int i = 0; i < octaves; ++i)
+    {
+        float h = worleyNoise((p + offset) * frequency, frequency);
+
+        sum += h * amplitude;
+        maxAmp += amplitude;
+
+        frequency *= lacunarity;
+        amplitude *= persistence;
+    }
+
+    //sum = remap011(sum, 0.0, maxAmp);
+    sum = sum * step(cutOff, sum);
+
+    return sum;
+}

@@ -29,6 +29,10 @@ public class CloudRaymarchingCamera : SceneViewFilter
     public float NoiseScale;
     private Material raymarchMat;
 
+    public Shader BlurShader;
+    private Material blurMaterial;
+
+
     private Camera _camera;
     public Camera Camera
     {
@@ -59,6 +63,8 @@ public class CloudRaymarchingCamera : SceneViewFilter
     private void Start()
     {
         raymarchMat = new Material(Shader);
+
+        blurMaterial = new Material(BlurShader);
 
         if (textureGenerator)
         {
@@ -95,8 +101,6 @@ public class CloudRaymarchingCamera : SceneViewFilter
             return;
         }
 
-        raymarchMat.SetMatrix("_CamFrustum", CamFrustum(Camera));
-        raymarchMat.SetMatrix("_CamToWorld", Camera.cameraToWorldMatrix);
         raymarchMat.SetFloat("_MaxDistance", MaxDistance);
 
         raymarchMat.SetVector(posId, sphere.position);
@@ -114,49 +118,8 @@ public class CloudRaymarchingCamera : SceneViewFilter
         raymarchMat.SetFloat(noiseScaleId, NoiseScale);
 
         raymarchMat.SetVector("_Index", Index);
-
-        RenderTexture.active = destination;
         raymarchMat.SetTexture("_Background", source);
-        GL.PushMatrix();
-        GL.LoadOrtho();
-        raymarchMat.SetPass(0);
-        GL.Begin(GL.QUADS);
 
-        //bottom left
-        GL.MultiTexCoord2(0, 0.0f, 0.0f);
-        GL.Vertex3(0.0f, 0.0f, 3.0f);
-        //bottom right
-        GL.MultiTexCoord2(0, 1.0f, 0.0f);
-        GL.Vertex3(1.0f, 0.0f, 2.0f);
-        //top right
-        GL.MultiTexCoord2(0, 1.0f, 1.0f);
-        GL.Vertex3(1.0f, 1.0f, 1.0f);
-        //top left
-        GL.MultiTexCoord2(0, 0.0f, 1.0f);
-        GL.Vertex3(0.0f, 1.0f, 0.0f);
-
-        GL.End();
-        GL.PopMatrix();
-    }
-
-    Matrix4x4 CamFrustum(Camera cam)
-    {
-        Matrix4x4 frustum = Matrix4x4.identity;
-        float fov = Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad);
-
-        Vector3 goUp = Vector3.up * fov;
-        Vector3 goRight = Vector3.right * fov * cam.aspect;
-
-        Vector3 topLeft = -Vector3.forward - goRight + goUp;
-        Vector3 topRight = -Vector3.forward + goRight + goUp;
-        Vector3 bottomLeft = -Vector3.forward - goRight - goUp;
-        Vector3 bottomRight = -Vector3.forward + goRight - goUp;
-
-        frustum.SetRow(0, topLeft);
-        frustum.SetRow(1, topRight);
-        frustum.SetRow(2, bottomRight);
-        frustum.SetRow(3, bottomLeft);
-
-        return frustum;
+        Graphics.Blit(source, destination, raymarchMat);
     }
 }

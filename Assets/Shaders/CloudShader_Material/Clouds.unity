@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44249433, g: 0.49157304, b: 0.57141453, a: 1}
+  m_IndirectSpecularColor: {r: 0.44249207, g: 0.49157256, b: 0.57141495, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -1795,7 +1795,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1024390905}
-  m_LocalRotation: {x: -0.47528437, y: 0.42583686, z: -0.7161707, w: -0.28260785}
+  m_LocalRotation: {x: 0.7524362, y: -0.2470533, z: 0.41548693, w: 0.4474094}
   m_LocalPosition: {x: 0, y: 3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
@@ -2642,7 +2642,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1493652318}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -2}
+  m_LocalPosition: {x: 0, y: 0, z: -2.08}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -2752,6 +2752,7 @@ MonoBehaviour:
   Shader: {fileID: 4800000, guid: a28f2de7fb7290a4c85ca2b8ca48fc5e, type: 3}
   CloudColor: {r: 0.8443396, g: 0.964512, b: 1, a: 0}
   NoiseScale: 1
+  BlurShader: {fileID: 4800000, guid: 155152a293955ef43a5a778348c9d98b, type: 3}
   MaxDistance: 10000
 --- !u!114 &1493652325
 MonoBehaviour:
@@ -2770,9 +2771,9 @@ MonoBehaviour:
   Slicer: {fileID: 7200000, guid: 80e0787c402884c47ad1a5f34c3beb36, type: 3}
   Settings:
     Resolution: 256
-    Coverage: 1
+    Coverage: 0.3
     Octaves: 4
-    Frequency: 4
+    Frequency: 2
     Lacunarity: 3
     Amplitude: 0.5
     Persistence: 0.5
@@ -3556,7 +3557,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1780642984}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: -0.81}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 430961567}

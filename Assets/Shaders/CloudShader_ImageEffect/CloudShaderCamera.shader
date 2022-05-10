@@ -57,8 +57,6 @@ Shader "Custom/CloudShaderCamera"
 			#include "CloudRaymarching.cginc"
 
 			uniform sampler2D _CameraDepthTexture;
-			uniform float4x4 _CamFrustum;
-			uniform float4x4 _CamToWorld;
 			uniform float _MaxDistance;
 
 			float _Density;
@@ -78,7 +76,7 @@ Shader "Custom/CloudShaderCamera"
 			float _Persistence;
 
 			sampler3D _Volume;
-			sampler2D _Background;
+			sampler2D _MainTex;
 			float3 _Index;
 
 			float _SphereRadius;
@@ -112,23 +110,17 @@ Shader "Custom/CloudShaderCamera"
 				o.vertex = UnityObjectToClipPos(v.vertex);
 				o.uv = v.uv;
 
-				o.ray = _CamFrustum[(int)index].xyz;
-				o.ray /= abs(o.ray.z);
-				o.ray = mul(_CamToWorld, o.ray);
-
 				o.worldPos = mul(unity_ObjectToWorld, v.vertex);
-
+				float3 viewVector = mul(unity_CameraInvProjection, float4(v.uv * 2 - 1, 0, -1));
+				o.ray = mul(unity_CameraToWorld, float4(viewVector, 0));
 				return o;
 			}
 
 			half4 frag(v2f i) : SV_Target
 			{
 
-				float3 rd = normalize(i.ray.xyz);
+				float3 rd = normalize(i.ray);
 				float3 ro = _WorldSpaceCameraPos;
-
-				//float3 ro = _WorldSpaceCameraPos;
-				//float3 rd = normalize(i.wPos - ro);
 
 				_FrameCount %= 8.0;
 				float2 frameCount = float2(_FrameCount, -_FrameCount);
@@ -189,7 +181,7 @@ Shader "Custom/CloudShaderCamera"
 				float depth = LinearEyeDepth(tex2D(_CameraDepthTexture, i.uv).r);
 				depth *= length(i.ray);
 
-				fixed3 back = tex2D(_Background, i.uv);
+				fixed3 back = tex2D(_MainTex, i.uv);
 
 				float4 o = march(ro, roJittered, rd, lightDir, depth, cubeInfo, perlinInfo, cloudInfo, sphereInfo);
 				return half4(o.rgb * o.a + back * (1 - o.a), 1.0);
