@@ -12,6 +12,7 @@ public class NoiseSettings : ICloneable
     public float Amplitude;
     public float Persistence;
     public Vector3 Index;
+    public bool IsDetails;
 
     public object Clone()
     {
@@ -34,7 +35,8 @@ public class NoiseSettings : ICloneable
                 && s.Lacunarity == Lacunarity
                 && s.Amplitude == Amplitude
                 && s.Persistence == Persistence
-                && s.Index == Index;
+                && s.Index == Index
+                && s.IsDetails == IsDetails;
         }
     }
 

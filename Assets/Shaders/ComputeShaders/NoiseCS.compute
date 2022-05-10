@@ -9,6 +9,7 @@
 RWTexture3D<float4> Result;
 uniform uint Resolution;
 uniform float3 CellIndex;
+uniform bool IsDetails;
 
 uniform float Coverage;
 uniform uint Octaves;
@@ -20,11 +21,23 @@ uniform float3 Offset;
 
 float GetNoise(float3 pos)
 {
-    //return worleyFbm(pos, Frequency) * .125;
-    float pfbm = lerp(1., perlinfbm(pos, Frequency, Octaves), .5);
-    return PerlinTilled(pos, Coverage, Octaves, Offset, Frequency, Amplitude, Lacunarity, Persistence);
+    if (IsDetails)
+    {
+        return PerlinTilled(pos, Coverage, Octaves, Offset, Frequency, Amplitude, Lacunarity, Persistence);
+    }
+    else
+    {
+        return WorleyTilled(pos, Coverage, Octaves, Offset, Frequency, Amplitude, Lacunarity, Persistence);
+    }
+
+
+    float wt = WorleyTilled(pos, Coverage, Octaves, Offset, Frequency, Amplitude, Lacunarity, Persistence);
+    float pt = PerlinTilled(pos, Coverage, Octaves, Offset, Frequency, Amplitude, Lacunarity, Persistence);
+    float cloud = remap(wt, pt, 1., 0., 1.);
+    return cloud;
 
     //return perlinfbm(pos, Frequency, Octaves);
+    //return WorleyTilled(pos, Coverage, Octaves, Offset, Frequency, Amplitude, Lacunarity, Persistence);
     //return WorleyNormal(pos, Coverage, Octaves, Offset, Frequency, Amplitude, Lacunarity, Persistence);
     return PerlinNormal(pos, Coverage, Octaves, Offset, Frequency, Amplitude, Lacunarity, Persistence);
 }

@@ -1,4 +1,5 @@
 using System;
+using UnityEditor;
 using UnityEngine;
 
 [ExecuteInEditMode]
@@ -47,6 +48,7 @@ public class TextureGenerator : MonoBehaviour
         ComputeShader.SetFloat("Amplitude", Settings.Amplitude);
         ComputeShader.SetFloat("Persistence", Settings.Persistence);
         ComputeShader.SetVector("CellIndex", Settings.Index);
+        ComputeShader.SetBool("IsDetails", Settings.IsDetails);
 
         ComputeShader.GetKernelThreadGroupSizes(kernel, out uint xGroupSize, out uint yGroupSize, out uint zGroupSize);
         ComputeShader.Dispatch(kernel, Settings.Resolution / (int)xGroupSize, Settings.Resolution / (int)yGroupSize, Settings.Resolution / (int)zGroupSize);
@@ -102,6 +104,10 @@ public class TextureGenerator : MonoBehaviour
         }
 
         Texture3D output = Tex3DFromTex2DArray(slices, Settings.Resolution);
+        string name = "NoiseVolume";
+        AssetDatabase.CreateAsset(output, "Assets/Shaders/ComputeShaders/" + name + ".asset");
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
         return output;
     }
 
