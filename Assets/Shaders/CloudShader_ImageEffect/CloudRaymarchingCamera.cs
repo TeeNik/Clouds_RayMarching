@@ -121,5 +121,10 @@ public class CloudRaymarchingCamera : SceneViewFilter
         raymarchMat.SetTexture("_Background", source);
 
         Graphics.Blit(source, destination, raymarchMat);
+
+        RenderTexture rt = RenderTexture.GetTemporary(source.width, source.height);
+        Graphics.Blit(source, rt, raymarchMat);
+        Graphics.Blit(rt, destination, blurMaterial);
+        RenderTexture.ReleaseTemporary(rt);
     }
 }
