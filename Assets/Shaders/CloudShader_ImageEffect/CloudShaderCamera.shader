@@ -67,6 +67,7 @@ Shader "Custom/CloudShaderCamera"
 			float _Persistence;
 
 			sampler3D _Volume;
+			sampler3D _DetailsVolume;
 			sampler2D _MainTex;
 
 			float _SphereRadius;
@@ -137,6 +138,7 @@ Shader "Custom/CloudShaderCamera"
 				perlinInfo.amp = _Amplitude;
 				perlinInfo.lacunarity = _Lacunarity;
 				perlinInfo.persistence = _Persistence;
+				perlinInfo.offset = _Offset;
 
 				// cloud
 				CloudInfo cloudInfo;
@@ -146,6 +148,7 @@ Shader "Custom/CloudShaderCamera"
 				cloudInfo.shadowColor = _ShadowColor;
 				cloudInfo.offset = _Offset * _Time.y;
 				cloudInfo.volume = _Volume;
+				cloudInfo.detailsVolume = _DetailsVolume;
 
 				//float n = worleyFbm(float3(i.uv, 0) * 1, 5);
 				//float pfbm = lerp(1., perlinfbm(float3(i.uv * 1., 0), 4., 7), .5);

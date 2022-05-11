@@ -22,6 +22,7 @@ public class CloudRaymarchingCamera : SceneViewFilter
     [SerializeField] private Transform sphere = null;
     [SerializeField] private Transform cube = null;
     [SerializeField] private TextureGenerator textureGenerator = null;
+    [SerializeField] private TextureGenerator detailsTextureGenerator = null;
 
     public Vector3 Offset;
     public Shader Shader;
@@ -62,17 +63,25 @@ public class CloudRaymarchingCamera : SceneViewFilter
     private void Start()
     {
         raymarchMat = new Material(Shader);
-
         blurMaterial = new Material(BlurShader);
 
         if (textureGenerator)
         {
             Texture3D noiseTexture = textureGenerator.Generate();
             raymarchMat.SetTexture("_Volume", noiseTexture);
-
             textureGenerator.OnSettingsChanged += (tex) =>
             {
                 raymarchMat.SetTexture("_Volume", tex);
+            };
+        }
+
+        if(detailsTextureGenerator)
+        {
+            Texture3D noiseTexture = detailsTextureGenerator.Generate();
+            raymarchMat.SetTexture("_DetailsVolume", noiseTexture);
+            detailsTextureGenerator.OnSettingsChanged += (tex) =>
+            {
+                raymarchMat.SetTexture("_DetailsVolume", tex);
             };
         }
     }
@@ -81,15 +90,6 @@ public class CloudRaymarchingCamera : SceneViewFilter
     {
         Vector3 eulers = new Vector3(0.0f, sunSpeedSlider.value * Time.deltaTime, 0.0f);
         sun.Rotate(eulers, Space.World);
-
-        if (Input.GetKeyDown(KeyCode.G))
-        {
-            if (textureGenerator)
-            {
-                Texture3D noiseTexture = textureGenerator.Generate();
-                raymarchMat.SetTexture("_Volume", noiseTexture);
-            }
-        }
     }
 
     private void OnRenderImage(RenderTexture source, RenderTexture destination)

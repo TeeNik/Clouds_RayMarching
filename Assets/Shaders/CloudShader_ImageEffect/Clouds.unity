@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44249335, g: 0.4915734, b: 0.57141393, a: 1}
+  m_IndirectSpecularColor: {r: 0.44249392, g: 0.49157405, b: 0.57141465, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -743,7 +743,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1674437704}
   m_Direction: 0
   m_MinValue: 0
-  m_MaxValue: 20
+  m_MaxValue: 2
   m_WholeNumbers: 0
   m_Value: 1
   m_OnValueChanged:
@@ -1765,7 +1765,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1024390905}
-  m_LocalRotation: {x: -0.65367603, y: 0.3318693, z: -0.55810595, w: -0.38870063}
+  m_LocalRotation: {x: 0.5683337, y: -0.38343185, z: 0.64479077, w: 0.33796728}
   m_LocalPosition: {x: 0, y: 3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
@@ -2399,13 +2399,14 @@ GameObject:
   - component: {fileID: 1493652322}
   - component: {fileID: 1493652324}
   - component: {fileID: 1493652325}
+  - component: {fileID: 1493652326}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!81 &1493652319
 AudioListener:
   m_ObjectHideFlags: 0
@@ -2572,7 +2573,8 @@ MonoBehaviour:
   sphere: {fileID: 906476368}
   cube: {fileID: 1780642989}
   textureGenerator: {fileID: 1493652325}
-  Offset: {x: 0, y: 0, z: 0.1}
+  detailsTextureGenerator: {fileID: 1493652326}
+  Offset: {x: 0, y: 0, z: 0}
   Shader: {fileID: 4800000, guid: a28f2de7fb7290a4c85ca2b8ca48fc5e, type: 3}
   CloudColor: {r: 0.8443396, g: 0.964512, b: 1, a: 0}
   SphereRadius: 0
@@ -2602,6 +2604,32 @@ MonoBehaviour:
     Amplitude: 0.5
     Persistence: 0.5
     Index: {x: 1, y: 0, z: 0}
+    IsDetails: 0
+--- !u!114 &1493652326
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1493652318}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07203d9df934998479b2b9acb6a0b5e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ComputeShader: {fileID: 7200000, guid: a2804afde80a40341b8ab4a6426c93a6, type: 3}
+  KernelName: CSMain
+  Slicer: {fileID: 7200000, guid: 80e0787c402884c47ad1a5f34c3beb36, type: 3}
+  Settings:
+    Resolution: 256
+    Coverage: 1
+    Octaves: 4
+    Frequency: 4
+    Lacunarity: 4
+    Amplitude: 0.5
+    Persistence: 0.5
+    Index: {x: 0, y: 0, z: 0}
+    IsDetails: 0
 --- !u!1 &1533048002
 GameObject:
   m_ObjectHideFlags: 0
@@ -3412,6 +3440,7 @@ MonoBehaviour:
     Amplitude: 0
     Persistence: 0
     Index: {x: 0, y: 0, z: 0}
+    IsDetails: 0
 --- !u!1 &1795154546
 GameObject:
   m_ObjectHideFlags: 0

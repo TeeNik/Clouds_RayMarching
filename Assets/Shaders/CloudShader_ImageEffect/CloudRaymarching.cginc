@@ -34,6 +34,7 @@ struct CloudInfo
     float3 cloudColor;
     float3 shadowColor;
     sampler3D volume;
+    sampler3D detailsVolume;
     float3 offset;
 };
 
@@ -85,17 +86,25 @@ float sampleDensity(float3 pos, PerlinInfo perlinInfo, CloudInfo cloudInfo, Cube
 {
     float3 normalizedPos = (pos - cube.minBound) / (cube.maxBound - cube.minBound);
     normalizedPos = pos + cloudInfo.offset;
-    fixed4 col = tex3D(cloudInfo.volume, normalizedPos);
-
-    float dist = length(pos - sphere.pos) / max(sphere.radius,0.001);
-    if (dist < 1.0)
-    {
-        col *= smoothstep(0.6, 1.0, dist);
-    }
-    return col.x;
     
-    return perlinfbm(normalizedPos, perlinInfo.freq, perlinInfo.octaves);
+    float shape = tex3D(cloudInfo.volume, normalizedPos); 
+    //float details = tex3D(cloudInfo.detailsVolume, normalizedPos);
+    //float invDetails = 1 - details;
+    //
+    //float oneMinusShape = 1 - shape;
+    //float detailErodeWeight = oneMinusShape * oneMinusShape * oneMinusShape;
+    //float density = shape - details * detailErodeWeight;
+
+    //float dist = length(pos - sphere.pos) / max(sphere.radius,0.001);
+    //if (dist < 1.0)
+    //{
+    //    col *= smoothstep(0.6, 1.0, dist);
+    //}
+    return shape;
+    
     return PerlinNormal(pos, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset, perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence);
+    return perlinfbm(normalizedPos, perlinInfo.freq, perlinInfo.octaves);
+    return WorleyTilled(pos, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset, perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence);
 }
 
 float4 march(float3 ro, float3 roJittered, float3 rd, float3 lightDir, float depth, CubeInfo cubeInfo, PerlinInfo perlinInfo, CloudInfo cloudInfo, SphereInfo sphereInfo)
@@ -126,6 +135,7 @@ float4 march(float3 ro, float3 roJittered, float3 rd, float3 lightDir, float dep
         }
 
         float fromCamSample = sampleDensity(t1, perlinInfo, cloudInfo, cubeInfo, sphereInfo);
+        //return float4(fromCamSample, fromCamSample, fromCamSample, 1);
 
         if (fromCamSample > 0.01)
         {
