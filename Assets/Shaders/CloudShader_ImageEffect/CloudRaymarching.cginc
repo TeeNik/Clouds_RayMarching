@@ -38,6 +38,11 @@ struct CloudInfo
     float3 offset;
 };
 
+struct LightInfo
+{
+    float3 lightDir;
+};
+
 float IGN(float2 screenXy)
 {
     const float3 magic = float3(0.06711056, 0.00583715, 52.9829189);
@@ -107,7 +112,7 @@ float sampleDensity(float3 pos, PerlinInfo perlinInfo, CloudInfo cloudInfo, Cube
     return WorleyTilled(pos, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset, perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence);
 }
 
-float4 march(float3 ro, float3 roJittered, float3 rd, float3 lightDir, float depth, CubeInfo cubeInfo, PerlinInfo perlinInfo, CloudInfo cloudInfo, SphereInfo sphereInfo)
+float4 march(float3 ro, float3 roJittered, float3 rd, LightInfo lightInfo, float depth, CubeInfo cubeInfo, PerlinInfo perlinInfo, CloudInfo cloudInfo, SphereInfo sphereInfo)
 {
     float3 t1 = float3(0.0, 0.0, 0.0);
     float distToBox, distInsideBox;
@@ -142,7 +147,7 @@ float4 march(float3 ro, float3 roJittered, float3 rd, float3 lightDir, float dep
             float t2 = 0.0;
             float distInsideSphereToLight = 0.0;
 
-            rayBoxDst(cubeInfo.minBound, cubeInfo.maxBound, t1, 1/lightDir, t2, distInsideSphereToLight);
+            rayBoxDst(cubeInfo.minBound, cubeInfo.maxBound, t1, 1/ lightInfo.lightDir, t2, distInsideSphereToLight);
             
             //MarchSteps is used instead of LightSteps intentionally.
             //Small steps five much prettier result.
@@ -157,7 +162,7 @@ float4 march(float3 ro, float3 roJittered, float3 rd, float3 lightDir, float dep
                 float toLightSample = sampleDensity(lightRayPos, perlinInfo, cloudInfo, cubeInfo, sphereInfo);
                 accumToLight += (toLightSample * marchStepSizeToLight);
             
-                lightRayPos += (lightDir * marchStepSizeToLight);
+                lightRayPos += (lightInfo.lightDir * marchStepSizeToLight);
             }
 
             float cloudDensity = saturate(fromCamSample * cloudInfo.density);

@@ -118,8 +118,6 @@ Shader "Custom/CloudShaderCamera"
 				float roJitter = IGN(i.vertex.xy + frameCount);
 				float3 roJittered = ro + (rd * roJitter * _JitterEnabled);
 
-				float3 lightDir = _WorldSpaceLightPos0.xyz;
-
 				// sphere
 				SphereInfo sphereInfo;
 				sphereInfo.pos = _SpherePos;
@@ -150,6 +148,9 @@ Shader "Custom/CloudShaderCamera"
 				cloudInfo.volume = _Volume;
 				cloudInfo.detailsVolume = _DetailsVolume;
 
+				LightInfo lightInfo;
+				lightInfo.lightDir = _WorldSpaceLightPos0.xyz;
+
 				//float n = worleyFbm(float3(i.uv, 0) * 1, 5);
 				//float pfbm = lerp(1., perlinfbm(float3(i.uv * 1., 0), 4., 7), .5);
 				//n = abs(pfbm * 2. - 1.); // billowy perlin noise
@@ -174,7 +175,7 @@ Shader "Custom/CloudShaderCamera"
 
 				fixed3 back = tex2D(_MainTex, i.uv);
 
-				float4 o = march(ro, roJittered, rd, lightDir, depth, cubeInfo, perlinInfo, cloudInfo, sphereInfo);
+				float4 o = march(ro, roJittered, rd, lightInfo, depth, cubeInfo, perlinInfo, cloudInfo, sphereInfo);
 				return half4(o.rgb * o.a + back * (1 - o.a), 1.0);
 			}
 
