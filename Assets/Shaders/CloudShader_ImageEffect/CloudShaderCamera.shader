@@ -79,6 +79,10 @@ Shader "Custom/CloudShaderCamera"
 			int _JitterEnabled;
 			int _FrameCount;
 
+			#define LIGHT_COUNT 1
+			float3 _lightColors[LIGHT_COUNT];
+			float4 _lightTransforms[LIGHT_COUNT];
+
 			struct appdata
 			{
 				float4 vertex : POSITION;
@@ -150,6 +154,14 @@ Shader "Custom/CloudShaderCamera"
 
 				LightInfo lightInfo;
 				lightInfo.lightDir = _WorldSpaceLightPos0.xyz;
+				lightInfo.ambient = _CloudColor;
+
+
+				for (int j = 0; j < LIGHT_COUNT; ++j)
+				{
+					lightInfo.lightSources[j].transform = _lightTransforms[j];
+					lightInfo.lightSources[j].color = _lightColors[j];
+				}
 
 				//float n = worleyFbm(float3(i.uv, 0) * 1, 5);
 				//float pfbm = lerp(1., perlinfbm(float3(i.uv * 1., 0), 4., 7), .5);

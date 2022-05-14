@@ -38,9 +38,18 @@ struct CloudInfo
     float3 offset;
 };
 
+struct LightSourceInfo
+{
+    float4 transform;
+    float3 color;
+};
+
 struct LightInfo
 {
+    float3 ambient;
     float3 lightDir;
+
+    LightSourceInfo lightSources[1];
 };
 
 float IGN(float2 screenXy)
@@ -130,6 +139,8 @@ float4 march(float3 ro, float3 roJittered, float3 rd, LightInfo lightInfo, float
     t1 += jitter * marchStepSize;
 
     float3 lightEnergy = float3(0.0f, 0.0f, 0.0f);
+    float3 finalColor = float3(0, 0, 0);
+
     float transmittance = 1.0;
 
     for (int i = 0; i < MarchSteps; ++i)
@@ -144,6 +155,11 @@ float4 march(float3 ro, float3 roJittered, float3 rd, LightInfo lightInfo, float
 
         if (fromCamSample > 0.01)
         {
+
+            float cloudDensity = saturate(fromCamSample * cloudInfo.density);
+
+            //start loop
+
             float t2 = 0.0;
             float distInsideSphereToLight = 0.0;
 
@@ -165,12 +181,16 @@ float4 march(float3 ro, float3 roJittered, float3 rd, LightInfo lightInfo, float
                 lightRayPos += (lightInfo.lightDir * marchStepSizeToLight);
             }
 
-            float cloudDensity = saturate(fromCamSample * cloudInfo.density);
 
             float atten = exp(-accumToLight * cloudInfo.absortion);
             float3 absorbedLight = atten * cloudDensity;
 
             lightEnergy += (absorbedLight * transmittance);
+            finalColor += (absorbedLight * transmittance) * lightInfo.lightSources[0].color;
+
+
+            //end loop
+
             transmittance *= (1.0 - cloudDensity);
 
             if (transmittance < 0.1)
@@ -183,5 +203,5 @@ float4 march(float3 ro, float3 roJittered, float3 rd, LightInfo lightInfo, float
         t1 += (rd * marchStepSize);
     }
 
-    return float4(lightEnergy.rgb * cloudInfo.cloudColor, 1.0 - transmittance);
+    return float4(finalColor, 1.0 - transmittance);
 }
