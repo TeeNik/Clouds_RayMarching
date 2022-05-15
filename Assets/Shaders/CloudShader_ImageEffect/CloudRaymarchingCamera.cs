@@ -4,6 +4,13 @@ using UnityEngine;
 using UnityEngine.Rendering.PostProcessing;
 using UnityEngine.UI;
 
+[System.Serializable]
+public class LightSourceInfo
+{
+    public Transform Transform;
+    public Color Color;
+}
+
 [RequireComponent(typeof(Camera))]
 [ExecuteInEditMode]
 public class CloudRaymarchingCamera : SceneViewFilter
@@ -28,6 +35,8 @@ public class CloudRaymarchingCamera : SceneViewFilter
     public Shader Shader;
     public Color CloudColor;
     public float SphereRadius = 0.1f;
+    public List<LightSourceInfo> LightSources = new List<LightSourceInfo>();
+
     private Material raymarchMat;
 
     public Shader BlurShader;
@@ -116,6 +125,8 @@ public class CloudRaymarchingCamera : SceneViewFilter
         raymarchMat.SetVector(cloudColorId, CloudColor.linear);
 
         raymarchMat.SetVector("_Offset", Offset);
+        
+        SetupLightInfo();
 
         raymarchMat.SetTexture("_Background", source);
 
@@ -125,5 +136,23 @@ public class CloudRaymarchingCamera : SceneViewFilter
         Graphics.Blit(source, rt, raymarchMat);
         Graphics.Blit(rt, destination, blurMaterial);
         RenderTexture.ReleaseTemporary(rt);
+    }
+
+    private void SetupLightInfo()
+    {
+        if(LightSources.Count > 0)
+        {
+            Vector4[] lightTransform = new Vector4[LightSources.Count];
+            Color[] lightColor = new Color[LightSources.Count];
+            for (int i = 0; i < LightSources.Count; i++)
+            {
+                var tr = LightSources[i].Transform;
+                var pos = tr.position;
+                lightTransform[i] = new Vector4(pos.x, pos.y, pos.z, tr.localScale.x);
+                lightColor[i] = LightSources[i].Color;
+            }
+            raymarchMat.SetVectorArray("_lightTransforms", lightTransform);
+            raymarchMat.SetColorArray("_lightColors", lightColor);
+        }
     }
 }
