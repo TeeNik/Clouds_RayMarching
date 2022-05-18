@@ -104,10 +104,10 @@ public class TextureGenerator : MonoBehaviour
         }
 
         Texture3D output = Tex3DFromTex2DArray(slices, Settings.Resolution);
-        string name = "NoiseVolume";
-        AssetDatabase.CreateAsset(output, "Assets/Shaders/ComputeShaders/" + name + ".asset");
-        AssetDatabase.SaveAssets();
-        AssetDatabase.Refresh();
+        //string name = "NoiseVolume";
+        //AssetDatabase.CreateAsset(output, "Assets/Shaders/ComputeShaders/" + name + ".asset");
+        //AssetDatabase.SaveAssets();
+        //AssetDatabase.Refresh();
         return output;
     }
 
