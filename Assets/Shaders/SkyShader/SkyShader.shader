@@ -30,6 +30,7 @@ Shader "Unlit/SkyShader"
             #pragma multi_compile_fog
 
             #include "UnityCG.cginc"
+            #include "../Utils/Random.cginc"
 
             struct appdata
             {
@@ -181,7 +182,6 @@ Shader "Unlit/SkyShader"
                 float power = pow(mappedPos, _Power);
                 float4 col = lerp(_BottomColor, _TopColor, power);
                 
-                //float2 tilledPos = TilingAndOffset(pos, _Tilling.xy, float2(0, 0));
                 float3 tilledPos = TilingAndOffset(pos, _Tilling.xyz, float3(0, 0, 0));
                 float noise;
                 float cells;
@@ -189,43 +189,10 @@ Shader "Unlit/SkyShader"
                 noise = saturate(noise);
                 noise = 1 - noise;
                 noise = pow(noise, _StarsSize);
+                
+                float starFlicker = rand3dTo1d(pos + (_Time.y));
+                noise *= starFlicker;
                 return col + noise;
-
-                //float4 pos = i.worldPos;
-                //pos = normalize(pos);
-                //float2 newUV;
-                //float PI = 3.14;
-                //newUV.x = 0.5 + atan2(pos.z, pos.x) / (PI * 2);
-                //newUV.y = 0.5 - asin(pos.y) / PI;
-                //
-                //float2 dx = ddx(newUV);
-                //float2 dy = ddy(newUV);
-                //float2 du = float2(dx.x, dy.x);
-                //du -= (abs(du) > 0.5f) * sign(du);
-                //dx.x = du.x;
-                //dy.x = du.y;
-                //
-                //newUV.x += _NoiseTexture_ST.z;
-
-                //fixed4 col = tex2Dgrad(_NoiseTexture, newUV, dx, dy);
-                //return col;
-
-                //float2 tilledPos = TilingAndOffset(i.uv, _NoiseScale, float2(0, 0));
-                //float3 noise = tex2Dgrad(_NoiseTexture, newUV, dx, dy);
-                //float speed = _Time.y * _NoiseRotSpeed;
-                //noise = Hue(noise, speed);
-                //noise = noise - _GlitterOffset;
-                //noise = normalize(noise);
-                //
-                //float3 viewDir = i.viewDir;
-                //viewDir = 1 - viewDir;
-                //
-                //float3 col = dot(noise, viewDir);
-                //col = saturate(col);
-                //col *= _GlitterColor;
-                //
-                //
-                //return fixed4(col, 1.0);
             }
             ENDCG
         }
