@@ -25,6 +25,7 @@ struct PerlinInfo
     float lacunarity;
     float persistence;
     float3 offset;
+    float detailsWeight;
 };
 
 struct CloudInfo
@@ -98,30 +99,52 @@ bool rayBoxDst(float3 boundsMin, float3 boundsMax, float3 rayOrigin, float3 invR
 
 float sampleDensity(float3 pos, PerlinInfo perlinInfo, CloudInfo cloudInfo, CubeInfo cube, SphereInfo sphere)
 {
-    float3 normalizedPos = (pos - cube.minBound) / (cube.maxBound - cube.minBound);
-    normalizedPos = pos + cloudInfo.offset;
-    
-    float shape = tex3D(cloudInfo.volume, normalizedPos); 
+    //float3 normalizedPos = (pos - cube.minBound) / (cube.maxBound - cube.minBound);
+    float3 samplePos = pos + cloudInfo.offset;
+ 
+    float details = tex3D(cloudInfo.detailsVolume , samplePos);
+    float shape = tex3D(cloudInfo.volume, samplePos);
+
+    //samplePos.y = 0;
+    float add = 0.0;
+    if (pos.y < 0.5)
+    {
+        float d = shape;
+        if (pos.y < d * 0.5)
+        {
+            add = d;
+        }
+    }
+
     //float details = tex3D(cloudInfo.detailsVolume, normalizedPos);
     //float invDetails = 1 - details;
     //
-    //float oneMinusShape = 1 - shape;
-    //float detailErodeWeight = oneMinusShape * oneMinusShape * oneMinusShape;
-    //float density = shape - details * detailErodeWeight;
+    float oneMinusShape = 1 - shape;
+    float detailErodeWeight = oneMinusShape * oneMinusShape * oneMinusShape;
+    shape = shape - details * detailErodeWeight * perlinInfo.detailsWeight;
 
     //float dist = length(pos - sphere.pos) / max(sphere.radius,0.001);
     //if (dist < 1.0)
     //{
     //    col *= smoothstep(0.6, 1.0, dist);
     //}
-    return shape;
+
+
+
+
+    float cutOff = perlinInfo.cutOff;
+    //if (samplePos.y < -0.3)
+    //    cutOff -= 0.2;
+
+    shape = shape * step(cutOff, shape);
+    return shape + add;
     
     return PerlinNormal(pos, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset, perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence);
-    return perlinfbm(normalizedPos, perlinInfo.freq, perlinInfo.octaves);
+    return perlinfbm(samplePos, perlinInfo.freq, perlinInfo.octaves);
     return WorleyTilled(pos, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset, perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence);
 }
 
-float3 GetLight(int lightIndex, LightInfo lightInfo, CubeInfo cubeInfo, PerlinInfo perlinInfo,
+inline float3 GetLight(int lightIndex, LightInfo lightInfo, CubeInfo cubeInfo, PerlinInfo perlinInfo,
     CloudInfo cloudInfo, SphereInfo sphereInfo, float density, float transmittance, float3 pos, int lightSteps)
 {
     LightSourceInfo info = lightInfo.lightSources[lightIndex];
@@ -131,14 +154,18 @@ float3 GetLight(int lightIndex, LightInfo lightInfo, CubeInfo cubeInfo, PerlinIn
 
 
     float c = smoothstep(0, 1, info.transform.w / distToLight);
-    //return density;
+    c *= c;
+    if (c < 0.01)
+    {
+        return float3(0, 0, 0);
+    }
 
     float marchStepSizeToLight = distToLight / (float)64;
 
     float3 lightRayPos = pos;
     float accumToLight = 0.0;
 
-    for (int j = 0; j < 16; ++j)
+    for (int j = 0; j < 8; ++j)
     {
         float toLightSample = sampleDensity(lightRayPos, perlinInfo, cloudInfo, cubeInfo, sphereInfo);
         accumToLight += (toLightSample * marchStepSizeToLight);
@@ -160,7 +187,7 @@ float4 march(float3 ro, float3 roJittered, float3 rd, LightInfo lightInfo, float
         return float4(0.0, 0.0, 0.0, 0.0);
 
     t1 = ro + rd * distToBox;
-    const int MarchSteps = 64;
+    const int MarchSteps = 32;
     const int LightSteps = 8;
     float marchStepSize = distInsideBox / (float)MarchSteps;
 
@@ -189,11 +216,11 @@ float4 march(float3 ro, float3 roJittered, float3 rd, LightInfo lightInfo, float
 
             //start loop
 
-            int numOfLights = 1;
-            for (int i = 0; i < numOfLights; ++i)
-            {
-                finalColor += GetLight(i, lightInfo, cubeInfo, perlinInfo, cloudInfo, sphereInfo, cloudDensity, transmittance, t1, LightSteps);
-            }
+            //int numOfLights = 1;
+            //for (int i = 0; i < numOfLights; ++i)
+            //{
+            //    finalColor += GetLight(i, lightInfo, cubeInfo, perlinInfo, cloudInfo, sphereInfo, cloudDensity, transmittance, t1, LightSteps);
+            //}
 
             float t2 = 0.0;
             float distInsideSphereToLight = 0.0;

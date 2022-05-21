@@ -43,6 +43,8 @@ Shader "Custom/CloudShaderCamera"
 
 			#pragma vertex vert
 			#pragma fragment frag
+			#pragma exclude_renderers d3d11_9x
+			#pragma exclude_renderers d3d9
 
 			#include "UnityCG.cginc"
 			#include "Lighting.cginc"
@@ -78,6 +80,8 @@ Shader "Custom/CloudShaderCamera"
 
 			int _JitterEnabled;
 			int _FrameCount;
+
+			float _DetailsWeight;
 
 			#define LIGHT_COUNT 1
 			float3 _lightColors[LIGHT_COUNT];
@@ -141,6 +145,7 @@ Shader "Custom/CloudShaderCamera"
 				perlinInfo.lacunarity = _Lacunarity;
 				perlinInfo.persistence = _Persistence;
 				perlinInfo.offset = _Offset;
+				perlinInfo.detailsWeight = _DetailsWeight;
 
 				// cloud
 				CloudInfo cloudInfo;

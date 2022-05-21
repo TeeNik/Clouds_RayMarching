@@ -36,6 +36,7 @@ public class CloudRaymarchingCamera : SceneViewFilter
     public Color CloudColor;
     public float SphereRadius = 0.1f;
     public List<LightSourceInfo> LightSources = new List<LightSourceInfo>();
+    public float DetailsWeight = 0.0f;
 
     private Material raymarchMat;
 
@@ -120,6 +121,7 @@ public class CloudRaymarchingCamera : SceneViewFilter
         raymarchMat.SetFloat(absortionId, absortionSlider.value);
         raymarchMat.SetInt(jitterId, (int)jitterSlider.value);
         raymarchMat.SetFloat(frameCountId, Time.frameCount);
+        raymarchMat.SetFloat("_DetailsWeight", DetailsWeight);
         ppLayer.antialiasingMode = taaToggle.isOn ? PostProcessLayer.Antialiasing.TemporalAntialiasing : PostProcessLayer.Antialiasing.None;
 
         raymarchMat.SetVector(cloudColorId, CloudColor.linear);
