@@ -3,6 +3,8 @@ Shader "Hidden/BlurShader"
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
+        _KernelSize("Kernel Size (N)", Int) = 3
+        _Spread("St. dev. (sigma)", Float) = 5.0
     }
     SubShader
     {
@@ -38,7 +40,10 @@ Shader "Hidden/BlurShader"
             }
 
             sampler2D _MainTex;
+            half4 _MainTex_TexelSize;
             sampler3D _Volume;
+            int _KernelSize;
+            float _Spread;
 
             float4 box(sampler2D tex, float2 uv, float2 size)
             {
@@ -49,13 +54,48 @@ Shader "Hidden/BlurShader"
                 return c / 9;
             }
 
+            float gaussian(int x)
+            {
+                float TWO_PI = 6.28319;
+                float E = 2.71828;
+                float sigmaSqu = _Spread * _Spread;
+                return (1 / sqrt(TWO_PI * sigmaSqu)) * pow(E, -(x * x) / (2 * sigmaSqu));
+            }
+
+            float3 gaussianBlur(float2 uv)
+            {
+                float4 col;
+                // Under col definition.
+                float kernelSum = 0.0;
+
+                int upper = ((_KernelSize - 1) / 2);
+                int lower = -upper;
+
+                // First pass loop.
+                for (int x = lower; x <= upper; ++x)
+                {
+                    float gauss = gaussian(x);
+                    kernelSum += gauss;
+                    col += gauss * tex2D(_MainTex, uv + fixed2(_MainTex_TexelSize.x * x, 0.0));
+                }
+
+                // Second pass loop.
+                for (int y = lower; y <= upper; ++y)
+                {
+                    float gauss = gaussian(y);
+                    kernelSum += gauss;
+                    col += gauss * tex2D(_MainTex, uv + fixed2(0.0, _MainTex_TexelSize.y * y));
+                }
+
+                // After loop.
+                col /= kernelSum;
+                return col;
+            }
+
             fixed4 frag (v2f i) : SV_Target
             {
-                fixed4 col = tex2D(_MainTex, i.uv);
-                //float density = tex3D(_Volume, normalizedPos)
-                // just invert the colors
-
-                col = box(_MainTex, i.uv, float2(1.0 / 1920.0, 1.0 / 1080.0));
+                //col = box(_MainTex, i.uv, float2(1.0 / 1920.0, 1.0 / 1080.0));
+                fixed4 col = fixed4(gaussianBlur(i.uv), 1.0);
 
                 //col.rgb = 1 - col.rgb;
                 return col;
