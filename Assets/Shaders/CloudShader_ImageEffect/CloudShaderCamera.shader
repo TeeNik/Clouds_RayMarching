@@ -43,8 +43,6 @@ Shader "Custom/CloudShaderCamera"
 
 			#pragma vertex vert
 			#pragma fragment frag
-			#pragma exclude_renderers d3d11_9x
-			#pragma exclude_renderers d3d9
 
 			#include "UnityCG.cginc"
 			#include "Lighting.cginc"

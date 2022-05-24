@@ -12,8 +12,8 @@ public class LightSourceInfo
 }
 
 [RequireComponent(typeof(Camera))]
-[ExecuteInEditMode]
-public class CloudRaymarchingCamera : SceneViewFilter
+[ExecuteInEditMode, ImageEffectAllowedInSceneView]
+public class CloudRaymarchingCamera : MonoBehaviour
 {
     [Header("UI")]
     [SerializeField] private Slider sunSpeedSlider = null;
@@ -37,6 +37,8 @@ public class CloudRaymarchingCamera : SceneViewFilter
     public float SphereRadius = 0.1f;
     public List<LightSourceInfo> LightSources = new List<LightSourceInfo>();
     public float DetailsWeight = 0.0f;
+
+    public bool Blur = false;
 
     private Material raymarchMat;
 
@@ -101,7 +103,7 @@ public class CloudRaymarchingCamera : SceneViewFilter
         Vector3 eulers = new Vector3(0.0f, sunSpeedSlider.value * Time.deltaTime, 0.0f);
         sun.Rotate(eulers, Space.World);
     }
-
+    
     private void OnRenderImage(RenderTexture source, RenderTexture destination)
     {
         if (!raymarchMat)
@@ -132,12 +134,20 @@ public class CloudRaymarchingCamera : SceneViewFilter
 
         raymarchMat.SetTexture("_Background", source);
 
-        Graphics.Blit(source, destination, raymarchMat);
-
-        RenderTexture rt = RenderTexture.GetTemporary(source.width, source.height);
-        Graphics.Blit(source, rt, raymarchMat);
-        Graphics.Blit(rt, destination, blurMaterial);
-        RenderTexture.ReleaseTemporary(rt);
+        if(Blur)
+        {
+            RenderTexture rt = RenderTexture.GetTemporary(source.width, source.height);
+            Graphics.Blit(source, rt, raymarchMat);
+            RenderTexture rt2 = RenderTexture.GetTemporary(source.width, source.height);
+            Graphics.Blit(rt, rt2, blurMaterial);
+            Graphics.Blit(rt2, destination, blurMaterial);
+            RenderTexture.ReleaseTemporary(rt);
+            RenderTexture.ReleaseTemporary(rt2);
+        }
+        else
+        {
+            Graphics.Blit(source, destination, raymarchMat);
+        }
     }
 
     private void SetupLightInfo()
