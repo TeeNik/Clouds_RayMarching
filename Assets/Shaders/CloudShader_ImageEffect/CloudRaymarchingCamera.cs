@@ -12,16 +12,23 @@ public class LightSourceInfo
 }
 
 [RequireComponent(typeof(Camera))]
-[ExecuteInEditMode, ImageEffectAllowedInSceneView]
-public class CloudRaymarchingCamera : MonoBehaviour
+[ExecuteInEditMode]
+public class CloudRaymarchingCamera : SceneViewFilter
 {
-    [Header("UI")]
-    [SerializeField] private Slider sunSpeedSlider = null;
-    [SerializeField] private Slider coverageSlider = null;
-    [SerializeField] private Slider densitySlider = null;
-    [SerializeField] private Slider absortionSlider = null;
-    [SerializeField] private Slider jitterSlider = null;
-    [SerializeField] private Toggle taaToggle = null;
+    [Header("Settings")]
+    [Range(0.0f, 50.0f)] public float SunSpeed = 25.0f;
+    [Range(0.0f, 1.0f)] public float Coverage = 0.25f;
+    [Range(0.0f, 2.0f)] public float Density = 0.5f;
+    [Range(0.0f, 20.0f)] public float Absortion = 5.0f;
+    public bool Jitter = true;
+
+    //[Header("UI")]
+    //[SerializeField] private Slider sunSpeedSlider = null;
+    //[SerializeField] private Slider coverageSlider = null;
+    //[SerializeField] private Slider densitySlider = null;
+    //[SerializeField] private Slider absortionSlider = null;
+    //[SerializeField] private Slider jitterSlider = null;
+    //[SerializeField] private Toggle taaToggle = null;
 
     [Header("Components")]
     [SerializeField] private Transform sun = null;
@@ -69,7 +76,6 @@ public class CloudRaymarchingCamera : MonoBehaviour
     private readonly int absortionId = Shader.PropertyToID("_Absortion");
     private readonly int jitterId = Shader.PropertyToID("_JitterEnabled");
     private readonly int frameCountId = Shader.PropertyToID("_FrameCount");
-
     private readonly int cloudColorId = Shader.PropertyToID("_CloudColor");
 
     private void Start()
@@ -100,10 +106,41 @@ public class CloudRaymarchingCamera : MonoBehaviour
 
     private void Update()
     {
-        Vector3 eulers = new Vector3(0.0f, sunSpeedSlider.value * Time.deltaTime, 0.0f);
+        Vector3 eulers = new Vector3(0.0f, SunSpeed * Time.deltaTime, 0.0f);
         sun.Rotate(eulers, Space.World);
     }
     
+    private void OnPostRender()
+    {
+        if (raymarchMat != null)
+        {
+            raymarchMat.SetFloat("_MaxDistance", MaxDistance);
+
+            raymarchMat.SetVector(posId, sphere.position);
+            raymarchMat.SetFloat(radiusId, SphereRadius);
+            raymarchMat.SetVector(cubeMinBound, cube.position - cube.localScale * 0.5f);
+            raymarchMat.SetVector(cubeMaxBound, cube.position + cube.localScale * 0.5f);
+            raymarchMat.SetFloat(coverageId, Coverage);
+            raymarchMat.SetFloat(densityId, Density);
+            raymarchMat.SetFloat(absortionId, Absortion);
+            raymarchMat.SetInt(jitterId, Jitter ? 1 : 0);
+            raymarchMat.SetFloat(frameCountId, Time.frameCount);
+            raymarchMat.SetFloat("_DetailsWeight", DetailsWeight);
+            //ppLayer.antialiasingMode = taaToggle.isOn ? PostProcessLayer.Antialiasing.TemporalAntialiasing : PostProcessLayer.Antialiasing.None;
+
+            raymarchMat.SetVector(cloudColorId, CloudColor.linear);
+
+            raymarchMat.SetVector("_Offset", Offset);
+
+            SetupLightInfo();
+
+            raymarchMat.SetTexture("_MainTex", Camera.activeTexture);
+
+            Graphics.Blit(Camera.activeTexture, Camera.activeTexture, raymarchMat);
+        }
+    }
+    
+    /*
     private void OnRenderImage(RenderTexture source, RenderTexture destination)
     {
         if (!raymarchMat)
@@ -118,13 +155,13 @@ public class CloudRaymarchingCamera : MonoBehaviour
         raymarchMat.SetFloat(radiusId, SphereRadius);
         raymarchMat.SetVector(cubeMinBound, cube.position - cube.localScale * 0.5f);
         raymarchMat.SetVector(cubeMaxBound, cube.position + cube.localScale * 0.5f);
-        raymarchMat.SetFloat(coverageId, coverageSlider.value);
-        raymarchMat.SetFloat(densityId, densitySlider.value);
-        raymarchMat.SetFloat(absortionId, absortionSlider.value);
-        raymarchMat.SetInt(jitterId, (int)jitterSlider.value);
+        raymarchMat.SetFloat(coverageId, Coverage);
+        raymarchMat.SetFloat(densityId, Density);
+        raymarchMat.SetFloat(absortionId, Absortion);
+        raymarchMat.SetInt(jitterId, Jitter ? 1 : 0);
         raymarchMat.SetFloat(frameCountId, Time.frameCount);
-        raymarchMat.SetFloat("_DetailsWeight", DetailsWeight);
-        ppLayer.antialiasingMode = taaToggle.isOn ? PostProcessLayer.Antialiasing.TemporalAntialiasing : PostProcessLayer.Antialiasing.None;
+        //raymarchMat.SetFloat("_DetailsWeight", DetailsWeight);
+        //ppLayer.antialiasingMode = taaToggle.isOn ? PostProcessLayer.Antialiasing.TemporalAntialiasing : PostProcessLayer.Antialiasing.None;
 
         raymarchMat.SetVector(cloudColorId, CloudColor.linear);
 
@@ -132,7 +169,7 @@ public class CloudRaymarchingCamera : MonoBehaviour
         
         SetupLightInfo();
 
-        raymarchMat.SetTexture("_Background", source);
+        raymarchMat.SetTexture("_MainTex", source);
 
         if(Blur)
         {
@@ -149,7 +186,7 @@ public class CloudRaymarchingCamera : MonoBehaviour
             Graphics.Blit(source, destination, raymarchMat);
         }
     }
-
+    */
     private void SetupLightInfo()
     {
         if(LightSources.Count > 0)
