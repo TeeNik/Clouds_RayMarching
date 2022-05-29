@@ -153,7 +153,7 @@ Shader "Custom/CloudShaderCamera"
 				cloudInfo.shadowColor = _ShadowColor;
 				cloudInfo.offset = _Offset * _Time.y;
 				cloudInfo.volume = _Volume;
-				cloudInfo.detailsVolume = _DetailsVolume;
+				//cloudInfo.detailsVolume = _DetailsVolume;
 
 				LightInfo lightInfo;
 				lightInfo.lightDir = _WorldSpaceLightPos0.xyz;
@@ -166,30 +166,10 @@ Shader "Custom/CloudShaderCamera"
 					lightInfo.lightSources[j].color = _lightColors[j];
 				}
 
-				//float n = worleyFbm(float3(i.uv, 0) * 1, 5);
-				//float pfbm = lerp(1., perlinfbm(float3(i.uv * 1., 0), 4., 7), .5);
-				//n = abs(pfbm * 2. - 1.); // billowy perlin noise
-				//return half4(n, n, n, 1);
-
-				//float n = GetWorleyNoise3D(i.wPos);
-				//n = fbm(i.wPos * 10);
-				//return half4(n, n, n, 1);
-
-				//float n = (PerlinNormal(float3(i.uv, 0) * 1.77, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset,
-				//	perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence)) * 0.5;
-				//n -= fbm(i.wPos * 10) * 0.105;
-				//return half4(n, n, n, 1);
-
-
-				//float3 pos = (i.wPos - _CubeMinBound) / (_CubeMaxBound - _CubeMinBound);
-				//fixed4 col = tex3D(_Volume, pos);
-				//return half4(col.xyz, 1);
-
 				float depth = LinearEyeDepth(tex2D(_CameraDepthTexture, i.uv).r);
 				depth *= length(i.ray);
 
 				fixed3 back = tex2D(_MainTex, i.uv);
-
 				float4 o = march(ro, roJittered, rd, lightInfo, depth, cubeInfo, perlinInfo, cloudInfo, sphereInfo);
 				return half4(o.rgb * o.a + back * (1 - o.a), 1.0);
 			}

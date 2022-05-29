@@ -35,7 +35,7 @@ struct CloudInfo
     float3 cloudColor;
     float3 shadowColor;
     sampler3D volume;
-    sampler3D detailsVolume;
+    //sampler3D detailsVolume;
     float3 offset;
 };
 
@@ -102,7 +102,7 @@ float sampleDensity(float3 pos, PerlinInfo perlinInfo, CloudInfo cloudInfo, Cube
     //float3 normalizedPos = (pos - cube.minBound) / (cube.maxBound - cube.minBound);
     float3 samplePos = pos + cloudInfo.offset;
  
-    float details = tex3D(cloudInfo.detailsVolume , samplePos);
+    //float details = tex3D(cloudInfo.detailsVolume , samplePos);
     float shape = tex3D(cloudInfo.volume, samplePos);
 
     //samplePos.y = 0;
@@ -119,9 +119,9 @@ float sampleDensity(float3 pos, PerlinInfo perlinInfo, CloudInfo cloudInfo, Cube
     //float details = tex3D(cloudInfo.detailsVolume, normalizedPos);
     //float invDetails = 1 - details;
     //
-    float oneMinusShape = 1 - shape;
-    float detailErodeWeight = oneMinusShape * oneMinusShape * oneMinusShape;
-    shape = shape - details * detailErodeWeight * perlinInfo.detailsWeight;
+    //float oneMinusShape = 1 - shape;
+    //float detailErodeWeight = oneMinusShape * oneMinusShape * oneMinusShape;
+    //shape = shape - details * detailErodeWeight * perlinInfo.detailsWeight;
 
     //float dist = length(pos - sphere.pos) / max(sphere.radius,0.001);
     //if (dist < 1.0)
@@ -187,7 +187,7 @@ float4 march(float3 ro, float3 roJittered, float3 rd, LightInfo lightInfo, float
         return float4(0.0, 0.0, 0.0, 0.0);
 
     t1 = ro + rd * distToBox;
-    const int MarchSteps = 32;
+    const int MarchSteps = 64;
     const int LightSteps = 8;
     float marchStepSize = distInsideBox / (float)MarchSteps;
 
