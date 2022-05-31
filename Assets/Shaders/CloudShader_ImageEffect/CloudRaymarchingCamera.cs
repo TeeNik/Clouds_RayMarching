@@ -21,6 +21,9 @@ public class CloudRaymarchingCamera : SceneViewFilter
     [Range(0.0f, 2.0f)] public float Density = 0.5f;
     [Range(0.0f, 20.0f)] public float Absortion = 5.0f;
     public bool Jitter = true;
+    [Range(0.0f, 1.0f)] public float CloudHeight = 0.5f;
+    public Color CloudsColor;
+    public Vector3 CloudsVelocity;
 
     //[Header("UI")]
     //[SerializeField] private Slider sunSpeedSlider = null;
@@ -38,20 +41,11 @@ public class CloudRaymarchingCamera : SceneViewFilter
     [SerializeField] private TextureGenerator textureGenerator = null;
     [SerializeField] private TextureGenerator detailsTextureGenerator = null;
 
-    public Vector3 Offset;
-    public Shader Shader;
-    public Color CloudColor;
     public float SphereRadius = 0.1f;
     public List<LightSourceInfo> LightSources = new List<LightSourceInfo>();
     public float DetailsWeight = 0.0f;
 
-    public bool Blur = false;
-
     private Material raymarchMat;
-
-    public Shader BlurShader;
-    private Material blurMaterial;
-
 
     private Camera _camera;
     public Camera Camera
@@ -65,8 +59,8 @@ public class CloudRaymarchingCamera : SceneViewFilter
             return _camera;
         }
     }
-    public float MaxDistance;
 
+    private readonly int mainTexId = Shader.PropertyToID("_MainTex");
     private readonly int posId = Shader.PropertyToID("_SpherePos");
     private readonly int radiusId = Shader.PropertyToID("_SphereRadius");
     private readonly int cubeMinBound = Shader.PropertyToID("_CubeMinBound");
@@ -77,11 +71,12 @@ public class CloudRaymarchingCamera : SceneViewFilter
     private readonly int jitterId = Shader.PropertyToID("_JitterEnabled");
     private readonly int frameCountId = Shader.PropertyToID("_FrameCount");
     private readonly int cloudColorId = Shader.PropertyToID("_CloudColor");
+    private readonly int cloudVelocityId = Shader.PropertyToID("_CloudVelocity");
+    private readonly int cloudHeightId = Shader.PropertyToID("_CloudHeight");
 
     private void Start()
     {
-        raymarchMat = new Material(Shader);
-        blurMaterial = new Material(BlurShader);
+        raymarchMat = new Material(Shader.Find("TeeNik/CloudShaderCamera"));
 
         if (textureGenerator)
         {
@@ -114,8 +109,7 @@ public class CloudRaymarchingCamera : SceneViewFilter
     {
         if (raymarchMat != null)
         {
-            raymarchMat.SetFloat("_MaxDistance", MaxDistance);
-
+            raymarchMat.SetTexture(mainTexId, Camera.activeTexture);
             raymarchMat.SetVector(posId, sphere.position);
             raymarchMat.SetFloat(radiusId, SphereRadius);
             raymarchMat.SetVector(cubeMinBound, cube.position - cube.localScale * 0.5f);
@@ -126,67 +120,14 @@ public class CloudRaymarchingCamera : SceneViewFilter
             raymarchMat.SetInt(jitterId, Jitter ? 1 : 0);
             raymarchMat.SetFloat(frameCountId, Time.frameCount);
             raymarchMat.SetFloat("_DetailsWeight", DetailsWeight);
-            //ppLayer.antialiasingMode = taaToggle.isOn ? PostProcessLayer.Antialiasing.TemporalAntialiasing : PostProcessLayer.Antialiasing.None;
-
-            raymarchMat.SetVector(cloudColorId, CloudColor.linear);
-
-            raymarchMat.SetVector("_Offset", Offset);
-
+            raymarchMat.SetVector(cloudVelocityId, CloudsVelocity);
+            raymarchMat.SetVector(cloudColorId, CloudsColor.linear);
+            raymarchMat.SetFloat(cloudHeightId, CloudHeight);
             SetupLightInfo();
-
-            raymarchMat.SetTexture("_MainTex", Camera.activeTexture);
-
             Graphics.Blit(Camera.activeTexture, Camera.activeTexture, raymarchMat);
         }
     }
     
-    /*
-    private void OnRenderImage(RenderTexture source, RenderTexture destination)
-    {
-        if (!raymarchMat)
-        {
-            Graphics.Blit(source, destination);
-            return;
-        }
-
-        raymarchMat.SetFloat("_MaxDistance", MaxDistance);
-
-        raymarchMat.SetVector(posId, sphere.position);
-        raymarchMat.SetFloat(radiusId, SphereRadius);
-        raymarchMat.SetVector(cubeMinBound, cube.position - cube.localScale * 0.5f);
-        raymarchMat.SetVector(cubeMaxBound, cube.position + cube.localScale * 0.5f);
-        raymarchMat.SetFloat(coverageId, Coverage);
-        raymarchMat.SetFloat(densityId, Density);
-        raymarchMat.SetFloat(absortionId, Absortion);
-        raymarchMat.SetInt(jitterId, Jitter ? 1 : 0);
-        raymarchMat.SetFloat(frameCountId, Time.frameCount);
-        //raymarchMat.SetFloat("_DetailsWeight", DetailsWeight);
-        //ppLayer.antialiasingMode = taaToggle.isOn ? PostProcessLayer.Antialiasing.TemporalAntialiasing : PostProcessLayer.Antialiasing.None;
-
-        raymarchMat.SetVector(cloudColorId, CloudColor.linear);
-
-        raymarchMat.SetVector("_Offset", Offset);
-        
-        SetupLightInfo();
-
-        raymarchMat.SetTexture("_MainTex", source);
-
-        if(Blur)
-        {
-            RenderTexture rt = RenderTexture.GetTemporary(source.width, source.height);
-            Graphics.Blit(source, rt, raymarchMat);
-            RenderTexture rt2 = RenderTexture.GetTemporary(source.width, source.height);
-            Graphics.Blit(rt, rt2, blurMaterial);
-            Graphics.Blit(rt2, destination, blurMaterial);
-            RenderTexture.ReleaseTemporary(rt);
-            RenderTexture.ReleaseTemporary(rt2);
-        }
-        else
-        {
-            Graphics.Blit(source, destination, raymarchMat);
-        }
-    }
-    */
     private void SetupLightInfo()
     {
         if(LightSources.Count > 0)

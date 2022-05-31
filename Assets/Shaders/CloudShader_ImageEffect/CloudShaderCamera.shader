@@ -1,4 +1,4 @@
-Shader "Custom/CloudShaderCamera"
+Shader "TeeNik/CloudShaderCamera"
 {
 	Properties
 	{
@@ -49,17 +49,17 @@ Shader "Custom/CloudShaderCamera"
 			#include "CloudRaymarching.cginc"
 
 			uniform sampler2D _CameraDepthTexture;
-			uniform float _MaxDistance;
 
 			float _Density;
 			float _Absortion;
 
 			float3 _CloudColor;
+			float _CloudHeight;
 			float3 _ShadowColor;
 
 			float _Coverage;
 			int _Octaves;
-			float3 _Offset;
+			float3 _CloudVelocity;
 			float _Frequency;
 			float _Amplitude;
 
@@ -135,15 +135,15 @@ Shader "Custom/CloudShaderCamera"
 				cubeInfo.maxBound = _CubeMaxBound;
 
 				// perlin noise
-				PerlinInfo perlinInfo;
-				perlinInfo.cutOff = 1.0 - _Coverage;
-				perlinInfo.octaves = _Octaves;
-				perlinInfo.freq = _Frequency;
-				perlinInfo.amp = _Amplitude;
-				perlinInfo.lacunarity = _Lacunarity;
-				perlinInfo.persistence = _Persistence;
-				perlinInfo.offset = _Offset;
-				perlinInfo.detailsWeight = _DetailsWeight;
+				//PerlinInfo perlinInfo;
+				//perlinInfo.cutOff = 1.0 - _Coverage;
+				//perlinInfo.octaves = _Octaves;
+				//perlinInfo.freq = _Frequency;
+				//perlinInfo.amp = _Amplitude;
+				//perlinInfo.lacunarity = _Lacunarity;
+				//perlinInfo.persistence = _Persistence;
+				//perlinInfo.offset = _CloudVelocity;
+				//perlinInfo.detailsWeight = _DetailsWeight;
 
 				// cloud
 				CloudInfo cloudInfo;
@@ -151,8 +151,10 @@ Shader "Custom/CloudShaderCamera"
 				cloudInfo.absortion = _Absortion;
 				cloudInfo.cloudColor = _CloudColor;
 				cloudInfo.shadowColor = _ShadowColor;
-				cloudInfo.offset = _Offset * _Time.y;
+				cloudInfo.offset = _CloudVelocity * _Time.y;
 				cloudInfo.volume = _Volume;
+				cloudInfo.height = _CloudHeight;
+				cloudInfo.cutOff = 1.0 - _Coverage;
 				//cloudInfo.detailsVolume = _DetailsVolume;
 
 				LightInfo lightInfo;
@@ -170,7 +172,7 @@ Shader "Custom/CloudShaderCamera"
 				depth *= length(i.ray);
 
 				fixed3 back = tex2D(_MainTex, i.uv);
-				float4 o = march(ro, roJittered, rd, lightInfo, depth, cubeInfo, perlinInfo, cloudInfo, sphereInfo);
+				float4 o = march(ro, roJittered, rd, lightInfo, depth, cubeInfo, cloudInfo, sphereInfo);
 				return half4(o.rgb * o.a + back * (1 - o.a), 1.0);
 			}
 

@@ -37,6 +37,8 @@ struct CloudInfo
     sampler3D volume;
     //sampler3D detailsVolume;
     float3 offset;
+    float height;
+    float cutOff;
 };
 
 struct LightSourceInfo
@@ -52,6 +54,9 @@ struct LightInfo
 
     LightSourceInfo lightSources[1];
 };
+
+#define MARCH_STEPS 128
+#define LIGHT_STEPS 8
 
 float IGN(float2 screenXy)
 {
@@ -97,22 +102,22 @@ bool rayBoxDst(float3 boundsMin, float3 boundsMax, float3 rayOrigin, float3 invR
     return dstA <= dstB;
 }
 
-float sampleDensity(float3 pos, PerlinInfo perlinInfo, CloudInfo cloudInfo, CubeInfo cube, SphereInfo sphere)
+float sampleDensity(float3 pos, CloudInfo cloudInfo, CubeInfo cube, SphereInfo sphere)
 {
-    //float3 normalizedPos = (pos - cube.minBound) / (cube.maxBound - cube.minBound);
+    float3 normalizedPos = (pos - cube.minBound) / (cube.maxBound - cube.minBound);
     float3 samplePos = pos + cloudInfo.offset;
  
     //float details = tex3D(cloudInfo.detailsVolume , samplePos);
-    float shape = tex3D(cloudInfo.volume, samplePos);
+    float shape = tex3Dlod(cloudInfo.volume, float4(samplePos, 0));
+    //float shape = tex3D(cloudInfo.volume, samplePos);
 
     //samplePos.y = 0;
     float add = 0.0;
-    if (pos.y < 0.5)
+    if (normalizedPos.y < cloudInfo.height)
     {
-        float d = shape;
-        if (pos.y < d * 0.5)
+        if (normalizedPos.y < shape * cloudInfo.height)
         {
-            add = d;
+            add = shape;
         }
     }
 
@@ -129,55 +134,65 @@ float sampleDensity(float3 pos, PerlinInfo perlinInfo, CloudInfo cloudInfo, Cube
     //    col *= smoothstep(0.6, 1.0, dist);
     //}
 
-
-
-
-    float cutOff = perlinInfo.cutOff;
-    //if (samplePos.y < -0.3)
-    //    cutOff -= 0.2;
-
-    shape = shape * step(cutOff, shape);
+    shape = shape * step(cloudInfo.cutOff, shape);
     return shape + add;
     
-    return PerlinNormal(pos, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset, perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence);
-    return perlinfbm(samplePos, perlinInfo.freq, perlinInfo.octaves);
-    return WorleyTilled(pos, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset, perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence);
+    //return PerlinNormal(pos, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset, perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence);
+    //return perlinfbm(samplePos, perlinInfo.freq, perlinInfo.octaves);
+    //return WorleyTilled(pos, perlinInfo.cutOff, perlinInfo.octaves, perlinInfo.offset, perlinInfo.freq, perlinInfo.amp, perlinInfo.lacunarity, perlinInfo.persistence);
 }
 
-inline float3 GetLight(int lightIndex, LightInfo lightInfo, CubeInfo cubeInfo, PerlinInfo perlinInfo,
-    CloudInfo cloudInfo, SphereInfo sphereInfo, float density, float transmittance, float3 pos, int lightSteps)
+inline float3 GetLight(int lightIndex, LightInfo lightInfo, CubeInfo cubeInfo,
+    CloudInfo cloudInfo, SphereInfo sphereInfo, float density, float transmittance, float3 pos)
 {
-    LightSourceInfo info = lightInfo.lightSources[lightIndex];
-    float3 lightDir = info.transform.xyz - pos;
-    float distToLight = length(lightDir);
-    lightDir = normalize(lightDir);
+    float3 lightDir;
+    float3 lightColor;
+    float distToLight;
 
-
-    float c = smoothstep(0, 1, info.transform.w / distToLight);
-    c *= c;
-    if (c < 0.01)
+    //for dynamic lights
+    if (lightIndex >= 0)
     {
-        return float3(0, 0, 0);
+        LightSourceInfo info = lightInfo.lightSources[lightIndex];
+        lightDir = info.transform.xyz - pos;
+        distToLight = length(lightDir);
+        lightDir = normalize(lightDir);
+        lightColor = info.color;
+    
+        float c = smoothstep(0, 1, info.transform.w / distToLight);
+        c *= c;
+        lightColor *= c;
+        if (c < 0.01)
+        {
+            return float3(0, 0, 0);
+        }
+    }
+    else //ambient
+    {
+        float t = 0.0f;
+        rayBoxDst(cubeInfo.minBound, cubeInfo.maxBound, pos, 1 / lightInfo.lightDir, t, distToLight);
+        lightDir = lightInfo.lightDir;
+        lightColor = lightInfo.ambient;
     }
 
-    float marchStepSizeToLight = distToLight / (float)64;
-
-    float3 lightRayPos = pos;
+    //MarchSteps is used instead of LightSteps intentionally.
+    //Small steps five much prettier result.
+    //Maybe I can replace it with occlusion shadow later.
+    float marchStepSizeToLight = distToLight / (float)MARCH_STEPS;
     float accumToLight = 0.0;
 
-    for (int j = 0; j < 8; ++j)
+    for (int j = 0; j < LIGHT_STEPS; ++j)
     {
-        float toLightSample = sampleDensity(lightRayPos, perlinInfo, cloudInfo, cubeInfo, sphereInfo);
+        float toLightSample = sampleDensity(pos, cloudInfo, cubeInfo, sphereInfo);
         accumToLight += (toLightSample * marchStepSizeToLight);
-        lightRayPos += (lightDir * marchStepSizeToLight);
+        pos += (lightDir * marchStepSizeToLight);
     }
 
     float atten = exp(-accumToLight * cloudInfo.absortion);
-    float3 absorbedLight = atten * info.color * c;
-    return (absorbedLight * transmittance);
+    float3 absorbedLight = atten * density;
+    return (absorbedLight * transmittance) * lightColor;
 }
 
-float4 march(float3 ro, float3 roJittered, float3 rd, LightInfo lightInfo, float depth, CubeInfo cubeInfo, PerlinInfo perlinInfo, CloudInfo cloudInfo, SphereInfo sphereInfo)
+float4 march(float3 ro, float3 roJittered, float3 rd, LightInfo lightInfo, float depth, CubeInfo cubeInfo, CloudInfo cloudInfo, SphereInfo sphereInfo)
 {
     float3 t1 = float3(0.0, 0.0, 0.0);
     float distToBox, distInsideBox;
@@ -187,9 +202,7 @@ float4 march(float3 ro, float3 roJittered, float3 rd, LightInfo lightInfo, float
         return float4(0.0, 0.0, 0.0, 0.0);
 
     t1 = ro + rd * distToBox;
-    const int MarchSteps = 64;
-    const int LightSteps = 8;
-    float marchStepSize = distInsideBox / (float)MarchSteps;
+    float marchStepSize = distInsideBox / (float)MARCH_STEPS;
 
     float3 jitter = roJittered - ro;
     t1 += jitter * marchStepSize;
@@ -199,62 +212,27 @@ float4 march(float3 ro, float3 roJittered, float3 rd, LightInfo lightInfo, float
 
     float transmittance = 1.0;
 
-    for (int i = 0; i < MarchSteps; ++i)
+    for (int i = 0; i < MARCH_STEPS; ++i)
     {
         if (length(t1 - ro) >= depth)
         {
             return(0, 0, 0, 0);
         }
 
-        float fromCamSample = sampleDensity(t1, perlinInfo, cloudInfo, cubeInfo, sphereInfo);
+        float fromCamSample = sampleDensity(t1, cloudInfo, cubeInfo, sphereInfo);
         //return float4(fromCamSample, fromCamSample, fromCamSample, 1);
 
         if (fromCamSample > 0.01)
         {
-
             float cloudDensity = saturate(fromCamSample * cloudInfo.density);
 
-            //start loop
-
-            //int numOfLights = 1;
-            //for (int i = 0; i < numOfLights; ++i)
-            //{
-            //    finalColor += GetLight(i, lightInfo, cubeInfo, perlinInfo, cloudInfo, sphereInfo, cloudDensity, transmittance, t1, LightSteps);
-            //}
-
-            float t2 = 0.0;
-            float distInsideSphereToLight = 0.0;
-            
-            rayBoxDst(cubeInfo.minBound, cubeInfo.maxBound, t1, 1/ lightInfo.lightDir, t2, distInsideSphereToLight);
-            
-            //MarchSteps is used instead of LightSteps intentionally.
-            //Small steps five much prettier result.
-            //Maybe I can replace it with occlusion shadow later.
-            float marchStepSizeToLight = distInsideSphereToLight / (float)MarchSteps;
-            
-            float3 lightRayPos = t1;
-            float accumToLight = 0.0;
-            
-            for (int j = 0; j < LightSteps; ++j)
+            int numOfLights = 1;
+            for (int i = -1; i < numOfLights; ++i)
             {
-                float toLightSample = sampleDensity(lightRayPos, perlinInfo, cloudInfo, cubeInfo, sphereInfo);
-                accumToLight += (toLightSample * marchStepSizeToLight);
-            
-                lightRayPos += (lightInfo.lightDir * marchStepSizeToLight);
+                finalColor += GetLight(i, lightInfo, cubeInfo, cloudInfo, sphereInfo, cloudDensity, transmittance, t1);
             }
-            
-            
-            float atten = exp(-accumToLight * cloudInfo.absortion);
-            float3 absorbedLight = atten * cloudDensity;
-            
-            lightEnergy += (absorbedLight * transmittance);
-            finalColor += (absorbedLight * transmittance) * lightInfo.ambient;
-
-
-            //end loop
 
             transmittance *= (1.0 - cloudDensity);
-
             if (transmittance < 0.01)
             {
                 transmittance = 0;
