@@ -35,10 +35,12 @@ struct CloudInfo
     float3 cloudColor;
     float3 shadowColor;
     sampler3D volume;
-    //sampler3D detailsVolume;
     float3 offset;
     float height;
     float cutOff;
+
+    sampler3D detailsVolume;
+    float detailsWeight;
 };
 
 struct LightSourceInfo
@@ -107,11 +109,8 @@ float sampleDensity(float3 pos, CloudInfo cloudInfo, CubeInfo cube, SphereInfo s
     float3 normalizedPos = (pos - cube.minBound) / (cube.maxBound - cube.minBound);
     float3 samplePos = pos + cloudInfo.offset;
  
-    //float details = tex3D(cloudInfo.detailsVolume , samplePos);
     float shape = tex3Dlod(cloudInfo.volume, float4(samplePos, 0));
-    //float shape = tex3D(cloudInfo.volume, samplePos);
 
-    //samplePos.y = 0;
     float add = 0.0;
     if (normalizedPos.y < cloudInfo.height)
     {
@@ -121,12 +120,10 @@ float sampleDensity(float3 pos, CloudInfo cloudInfo, CubeInfo cube, SphereInfo s
         }
     }
 
-    //float details = tex3D(cloudInfo.detailsVolume, normalizedPos);
-    //float invDetails = 1 - details;
-    //
+    //float details = tex3Dlod(cloudInfo.detailsVolume, float4(samplePos, 0));
     //float oneMinusShape = 1 - shape;
     //float detailErodeWeight = oneMinusShape * oneMinusShape * oneMinusShape;
-    //shape = shape - details * detailErodeWeight * perlinInfo.detailsWeight;
+    //shape = shape - details * detailErodeWeight * cloudInfo.detailsWeight;
 
     //float dist = length(pos - sphere.pos) / max(sphere.radius,0.001);
     //if (dist < 1.0)
@@ -194,32 +191,31 @@ inline float3 GetLight(int lightIndex, LightInfo lightInfo, CubeInfo cubeInfo,
 
 float4 march(float3 ro, float3 roJittered, float3 rd, LightInfo lightInfo, float depth, CubeInfo cubeInfo, CloudInfo cloudInfo, SphereInfo sphereInfo)
 {
-    float3 t1 = float3(0.0, 0.0, 0.0);
+    float3 pos = float3(0.0, 0.0, 0.0);
     float distToBox, distInsideBox;
     bool intersectsBox = rayBoxDst(cubeInfo.minBound, cubeInfo.maxBound, ro, 1/rd, distToBox, distInsideBox);
 
     if (!intersectsBox)
         return float4(0.0, 0.0, 0.0, 0.0);
 
-    t1 = ro + rd * distToBox;
+    pos = ro + rd * distToBox;
     float marchStepSize = distInsideBox / (float)MARCH_STEPS;
 
     float3 jitter = roJittered - ro;
-    t1 += jitter * marchStepSize;
+    pos += jitter * marchStepSize;
 
-    float3 lightEnergy = float3(0.0f, 0.0f, 0.0f);
     float3 finalColor = float3(0, 0, 0);
 
     float transmittance = 1.0;
 
     for (int i = 0; i < MARCH_STEPS; ++i)
     {
-        if (length(t1 - ro) >= depth)
+        if (length(pos - ro) >= depth)
         {
-            return(0, 0, 0, 0);
+            break;
         }
 
-        float fromCamSample = sampleDensity(t1, cloudInfo, cubeInfo, sphereInfo);
+        float fromCamSample = sampleDensity(pos, cloudInfo, cubeInfo, sphereInfo);
         //return float4(fromCamSample, fromCamSample, fromCamSample, 1);
 
         if (fromCamSample > 0.01)
@@ -229,7 +225,7 @@ float4 march(float3 ro, float3 roJittered, float3 rd, LightInfo lightInfo, float
             int numOfLights = 1;
             for (int i = -1; i < numOfLights; ++i)
             {
-                finalColor += GetLight(i, lightInfo, cubeInfo, cloudInfo, sphereInfo, cloudDensity, transmittance, t1);
+                finalColor += GetLight(i, lightInfo, cubeInfo, cloudInfo, sphereInfo, cloudDensity, transmittance, pos);
             }
 
             transmittance *= (1.0 - cloudDensity);
@@ -240,7 +236,7 @@ float4 march(float3 ro, float3 roJittered, float3 rd, LightInfo lightInfo, float
             }
         }
 
-        t1 += (rd * marchStepSize);
+        pos += (rd * marchStepSize);
     }
 
     return float4(finalColor, 1.0 - transmittance);

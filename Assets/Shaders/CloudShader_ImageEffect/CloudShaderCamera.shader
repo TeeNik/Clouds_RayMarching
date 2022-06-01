@@ -155,7 +155,8 @@ Shader "TeeNik/CloudShaderCamera"
 				cloudInfo.volume = _Volume;
 				cloudInfo.height = _CloudHeight;
 				cloudInfo.cutOff = 1.0 - _Coverage;
-				//cloudInfo.detailsVolume = _DetailsVolume;
+				cloudInfo.detailsVolume = _DetailsVolume;
+				cloudInfo.detailsWeight = _DetailsWeight;
 
 				LightInfo lightInfo;
 				lightInfo.lightDir = _WorldSpaceLightPos0.xyz;
@@ -168,7 +169,7 @@ Shader "TeeNik/CloudShaderCamera"
 					lightInfo.lightSources[j].color = _lightColors[j];
 				}
 
-				float depth = LinearEyeDepth(tex2D(_CameraDepthTexture, i.uv).r);
+				float depth = LinearEyeDepth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, i.uv).r);
 				depth *= length(i.ray);
 
 				fixed3 back = tex2D(_MainTex, i.uv);
