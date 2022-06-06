@@ -4,17 +4,23 @@ using UnityEngine;
 
 public class Star : MonoBehaviour
 {
+    [Header("Settings")]
     public int Amount = 17;
     public float Radius = 20.0f;
     public float FirefliesSpeed = 2.0f;
     public float StarRotationSpeed = 100.0f;
+    public float MovementOffset = 0.2f;
+
+    [Header("Refereces")]
     public GameObject FireflyPrefab;
     public Transform StarObject;
 
     private Transform[] Objects;
+    private Vector3 InitialPos;
 
     void Start()
     {
+        InitialPos = transform.position;
         Objects = new Transform[Amount];
         for (int i = 0; i < Amount; ++i)
         {
@@ -31,6 +37,8 @@ public class Star : MonoBehaviour
         }
 
         StarObject.Rotate(StarObject.forward, Time.deltaTime * StarRotationSpeed);
+
+        transform.position = InitialPos + Vector3.up * MovementOffset * Mathf.Sin(Time.time);
     }
 
     private float rand1dTo1d(float value, float mutator = 0.546f)
