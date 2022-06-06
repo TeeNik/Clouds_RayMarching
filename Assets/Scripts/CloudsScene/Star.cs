@@ -11,12 +11,30 @@ public class Star : MonoBehaviour
     public float StarRotationSpeed = 100.0f;
     public float MovementOffset = 0.2f;
 
+    public float Speed;
+
     [Header("Refereces")]
     public GameObject FireflyPrefab;
     public Transform StarObject;
 
+    public bool IsActive { get; private set; }
+
     private Transform[] Objects;
     private Vector3 InitialPos;
+    private Vector3 Velocity;
+    private float EndY;
+
+
+    public void StartFlight(Vector3 start, Vector3 end)
+    {
+        gameObject.SetActive(true);
+        IsActive = true;
+
+        Velocity = (end - start).normalized * Speed;
+        EndY = end.y;
+        transform.position = start;
+        transform.forward = Velocity.normalized;
+    }
 
     void Start()
     {
@@ -30,15 +48,25 @@ public class Star : MonoBehaviour
 
     void Update()
     {
-        for (int i = 0; i < Objects.Length; ++i)
+        if(IsActive)
         {
-            Transform sphere = Objects[i];
-            sphere.localPosition = GetSphereDir(i);
+            transform.position += Velocity * Time.deltaTime;
+
+            for (int i = 0; i < Objects.Length; ++i)
+            {
+                Transform sphere = Objects[i];
+                sphere.localPosition = GetSphereDir(i);
+            }
+
+            StarObject.Rotate(StarObject.forward, Time.deltaTime * StarRotationSpeed);
+            //transform.position = InitialPos + Vector3.up * MovementOffset * Mathf.Sin(Time.time);
+
+            if(transform.position.y < EndY)
+            {
+                IsActive = false;
+                gameObject.SetActive(false);
+            }
         }
-
-        StarObject.Rotate(StarObject.forward, Time.deltaTime * StarRotationSpeed);
-
-        transform.position = InitialPos + Vector3.up * MovementOffset * Mathf.Sin(Time.time);
     }
 
     private float rand1dTo1d(float value, float mutator = 0.546f)
