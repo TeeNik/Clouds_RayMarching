@@ -9,10 +9,11 @@ public class LightSourceInfo
 {
     public Transform Transform;
     public Color Color;
+    public float Radius;
 }
 
 [RequireComponent(typeof(Camera))]
-[ExecuteInEditMode]
+[ExecuteInEditMode, ImageEffectAllowedInSceneView]
 public class CloudRaymarchingCamera : SceneViewFilter
 {
     [Header("Settings")]
@@ -104,7 +105,6 @@ public class CloudRaymarchingCamera : SceneViewFilter
         Vector3 eulers = new Vector3(0.0f, SunSpeed * Time.deltaTime, 0.0f);
         sun.Rotate(eulers, Space.World);
     }
-    
     private void OnPostRender()
     {
         if (raymarchMat != null)
@@ -136,9 +136,8 @@ public class CloudRaymarchingCamera : SceneViewFilter
             Color[] lightColor = new Color[LightSources.Count];
             for (int i = 0; i < LightSources.Count; i++)
             {
-                var tr = LightSources[i].Transform;
-                var pos = tr.position;
-                lightTransform[i] = new Vector4(pos.x, pos.y, pos.z, tr.localScale.x);
+                var pos = LightSources[i].Transform.position;
+                lightTransform[i] = new Vector4(pos.x, pos.y, pos.z, LightSources[i].Radius);
                 lightColor[i] = LightSources[i].Color;
             }
             raymarchMat.SetVectorArray("_lightTransforms", lightTransform);

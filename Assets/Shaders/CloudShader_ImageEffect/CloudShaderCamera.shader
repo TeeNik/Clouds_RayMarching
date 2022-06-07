@@ -35,7 +35,6 @@ Shader "TeeNik/CloudShaderCamera"
 		Cull Off
 		ZWrite Off
 		ZTest Always
-		Blend SrcAlpha OneMinusSrcAlpha
 
 		Pass
 		{
@@ -81,8 +80,7 @@ Shader "TeeNik/CloudShaderCamera"
 
 			float _DetailsWeight;
 
-			#define LIGHT_COUNT 1
-			float3 _lightColors[LIGHT_COUNT];
+			float4 _lightColors[LIGHT_COUNT];
 			float4 _lightTransforms[LIGHT_COUNT];
 
 			struct appdata

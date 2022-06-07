@@ -43,10 +43,12 @@ struct CloudInfo
     float detailsWeight;
 };
 
+#define LIGHT_COUNT 1
+
 struct LightSourceInfo
 {
     float4 transform;
-    float3 color;
+    float4 color;
 };
 
 struct LightInfo
@@ -54,7 +56,7 @@ struct LightInfo
     float3 ambient;
     float3 lightDir;
 
-    LightSourceInfo lightSources[1];
+    LightSourceInfo lightSources[LIGHT_COUNT];
 };
 
 #define MARCH_STEPS 128
@@ -222,8 +224,7 @@ float4 march(float3 ro, float3 roJittered, float3 rd, LightInfo lightInfo, float
         {
             float cloudDensity = saturate(fromCamSample * cloudInfo.density);
 
-            int numOfLights = 1;
-            for (int i = -1; i < numOfLights; ++i)
+            for (int i = -1; i < LIGHT_COUNT; ++i)
             {
                 finalColor += GetLight(i, lightInfo, cubeInfo, cloudInfo, sphereInfo, cloudDensity, transmittance, pos);
             }
