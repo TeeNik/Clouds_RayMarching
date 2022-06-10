@@ -10,13 +10,6 @@ public class Balloon : MonoBehaviour
     public Vector3 MinBound;
     public Vector3 MaxBound;
 
-    //public float MinDist;
-    //public float MaxDist;
-    //public float MinSideOffet;
-    //public float MaxSideOffet;
-    //public float MinHeight;
-    //public float MaxHeight;
-
     public Texture2D[] Textures;
 
     public bool IsActive { get; private set; }
@@ -34,6 +27,9 @@ public class Balloon : MonoBehaviour
         Vector3 side = Random.Range(0, 2) > 0 ? player.right : -player.right;
         pos += side * Random.Range(MinBound.x, MaxBound.y);
         transform.position = pos;
+
+        var texture = Textures[Random.Range(0, Textures.Length)];
+        GetComponent<MeshRenderer>().material.SetTexture("_MainTex", texture);
     }
 
     void Update()
