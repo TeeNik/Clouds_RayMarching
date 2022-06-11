@@ -2,25 +2,6 @@ Shader "TeeNik/CloudShaderCamera"
 {
 	Properties
 	{
-		_Density("Density", Range(0.0, 1.0)) = 0.04
-		_Absortion("Absortion", Range(0.0, 20.0)) = 20.0
-
-		_CloudColor("CloudColor", Vector) = (1.0, 1.0, 1.0)
-		_ShadowColor("ShadowColor", Vector) = (0.0, 0.0, 0.0)
-
-		_Coverage("Coverage", Range(0.0, 1.0)) = 0.42
-		_Octaves("Octaves", Range(1, 8)) = 8
-		_Offset("Offset", Vector) = (0.0, 0.005, 0.0, 0.0)
-		_Frequency("Frequency", Float) = 3.0
-		_Lacunarity("Lacunarity", Float) = 3.0
-
-		_Volume("Volume", 3D) = "white" {}
-
-		[HideInInspector] _JitterEnabled("JitterEnabled", Range(0, 1)) = 1
-		[HideInInspector] _FrameCount("FrameCount", Int) = 0.0
-						 
-		[HideInInspector] _Amplitude("Amplitude", Float) = 0.5
-		[HideInInspector] _Persistence("Persistence", Float) = 0.5
 	}
 
 		SubShader
@@ -57,13 +38,7 @@ Shader "TeeNik/CloudShaderCamera"
 			float3 _ShadowColor;
 
 			float _Coverage;
-			int _Octaves;
 			float3 _CloudVelocity;
-			float _Frequency;
-			float _Amplitude;
-
-			float _Lacunarity;
-			float _Persistence;
 
 			sampler3D _Volume;
 			sampler3D _DetailsVolume;
