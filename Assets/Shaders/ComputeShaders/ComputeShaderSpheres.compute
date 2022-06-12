@@ -1,6 +1,6 @@
 #pragma kernel Spheres
 
-#include "Random.cginc"
+#include "../Utils/Random.cginc"
 
 RWStructuredBuffer<float3> Result;
 uniform float Time;

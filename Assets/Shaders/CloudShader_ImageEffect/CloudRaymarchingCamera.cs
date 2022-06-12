@@ -26,21 +26,13 @@ public class CloudRaymarchingCamera : SceneViewFilter
     public Color CloudsColor;
     public Vector3 CloudsVelocity;
 
-    //[Header("UI")]
-    //[SerializeField] private Slider sunSpeedSlider = null;
-    //[SerializeField] private Slider coverageSlider = null;
-    //[SerializeField] private Slider densitySlider = null;
-    //[SerializeField] private Slider absortionSlider = null;
-    //[SerializeField] private Slider jitterSlider = null;
-    //[SerializeField] private Toggle taaToggle = null;
-
     [Header("Components")]
     [SerializeField] private Transform sun = null;
-    [SerializeField] private PostProcessLayer ppLayer = null;
     [SerializeField] private Transform sphere = null;
     [SerializeField] private Transform cube = null;
     [SerializeField] private TextureGenerator textureGenerator = null;
     [SerializeField] private TextureGenerator detailsTextureGenerator = null;
+    [SerializeField] private Shader shader = null;
 
     public float SphereRadius = 0.1f;
     public List<LightSourceInfo> LightSources = new List<LightSourceInfo>();
@@ -77,7 +69,7 @@ public class CloudRaymarchingCamera : SceneViewFilter
 
     private void Start()
     {
-        raymarchMat = new Material(Shader.Find("TeeNik/CloudShaderCamera"));
+        raymarchMat = new Material(shader);
 
         if (textureGenerator)
         {

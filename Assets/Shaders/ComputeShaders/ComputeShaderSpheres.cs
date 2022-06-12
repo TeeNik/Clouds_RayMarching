@@ -8,6 +8,7 @@ public class ComputeShaderSpheres : MonoBehaviour
 {
     public ComputeShader Shader;
     public int SphereAmount = 17;
+    public float Radius = 20.0f;
     public GameObject SpherePrefab;
 
     private ComputeBuffer ResultBuffer;
@@ -44,7 +45,8 @@ public class ComputeShaderSpheres : MonoBehaviour
         for (int i = 0; i < Spheres.Length; ++i)
         {
             Transform sphere = Spheres[i];
-            sphere.localPosition = Output[i];
+            //sphere.localPosition = Output[i];
+            sphere.localPosition = GetSphereDir(i);
         }
 
         timer.Stop();
@@ -72,7 +74,7 @@ public class ComputeShaderSpheres : MonoBehaviour
         Vector3 orthogonal = Vector3.Normalize(Vector3.Cross(baseDir, rand1dTo3d(id + 7.1393f) - Vector3.one * 0.5f)) * (rand1dTo1d(id + 3.7443f) * 0.9f + 0.1f); ;
         float scaledTime = Time.time * 2 + rand1dTo1d(id) * 845.12547f;
         Vector3 dir = baseDir * Mathf.Sin(scaledTime) + orthogonal * Mathf.Cos(scaledTime);
-        return dir * 20;
+        return dir * Radius;
     }
 
     private void OnDestroy()

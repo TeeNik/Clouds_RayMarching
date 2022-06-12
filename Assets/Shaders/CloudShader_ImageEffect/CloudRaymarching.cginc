@@ -43,7 +43,7 @@ struct CloudInfo
     float detailsWeight;
 };
 
-#define LIGHT_COUNT 1
+#define LIGHT_COUNT 8
 
 struct LightSourceInfo
 {

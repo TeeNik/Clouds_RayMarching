@@ -14,7 +14,7 @@ Shader "Unlit/SkyShader"
         _Tilling("Tilling", Vector) = (1.0, 1.0, 0.0)
         _StarsAmount("StarsAmount", Float) = 1.0
         _StarsSize("StarsSize", Float) = 1.0
-
+        _StarsIntensity("StarsIntensity", Float) = 1.0
     }
     SubShader
     {
@@ -61,6 +61,7 @@ Shader "Unlit/SkyShader"
             float3 _Tilling;
             float _StarsAmount;
             float _StarsSize;
+            float _StarsIntensity;
 
             float Remap(float In, float2 InMinMax, float2 OutMinMax)
             {
@@ -188,10 +189,13 @@ Shader "Unlit/SkyShader"
                 Voronoi3D(tilledPos, 100, _StarsAmount, noise, cells);
                 noise = saturate(noise);
                 noise = 1 - noise;
+                noise *= _GlitterColor;
                 noise = pow(noise, _StarsSize);
+                noise *= _StarsIntensity;
                 
                 float starFlicker = rand3dTo1d(pos + (_Time.y));
                 noise *= starFlicker;
+                
                 return col + noise;
             }
             ENDCG

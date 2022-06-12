@@ -23,6 +23,9 @@ float GetNoise(float3 pos)
 {
     if (IsDetails)
     {
+        float details = lerp(1., perlinfbm(pos, Frequency, Octaves), .5);
+        details = abs(details * 2. - 1.);
+        return details;
         return PerlinTilled(pos, Coverage, Octaves, Offset, Frequency, Amplitude, Lacunarity, Persistence);
     }
     else

@@ -24,7 +24,6 @@ public class TextureGenerator : MonoBehaviour
         if(isChanged)
         {
             prevSettings = (NoiseSettings)Settings.Clone();
-            print("Changed");
             OnSettingsChanged?.Invoke(Generate());
         }
     }

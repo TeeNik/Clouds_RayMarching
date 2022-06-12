@@ -142,7 +142,7 @@ float PerlinTilled(float3 p, float cutOff, int octaves, float3 offset, float fre
     }
 
     //sum = remap01(sum, 0.0, maxAmp);
-    sum = sum * step(cutOff, sum);
+    //sum = sum * step(cutOff, sum);
 
     return sum;
 }
@@ -164,7 +164,7 @@ float WorleyTilled(float3 p, float cutOff, int octaves, float3 offset, float fre
     }
 
     //sum = remap011(sum, 0.0, maxAmp);
-    sum = sum * step(cutOff, sum);
+    //sum = sum * step(cutOff, sum);
 
     return sum;
 }
