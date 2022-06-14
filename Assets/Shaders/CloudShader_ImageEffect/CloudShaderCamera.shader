@@ -147,7 +147,7 @@ Shader "TeeNik/CloudShaderCamera"
 
 				fixed3 back = tex2D(_MainTex, i.uv);
 				float4 o = march(ro, roJittered, rd, lightInfo, depth, cubeInfo, cloudInfo, sphereInfo);
-				return half4(o.rgb * o.a + back * (1 - o.a), 1.0);
+				return half4(o.rgb + back * (1 - o.a), 1.0);
 			}
 
 			ENDCG
