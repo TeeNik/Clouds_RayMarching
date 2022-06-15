@@ -11,7 +11,9 @@ public class Star : MonoBehaviour
     public float StarRotationSpeed = 100.0f;
     public float MovementOffset = 0.2f;
 
-    public float Speed;
+    public float MinSpeed = .8f;
+    public float MaxSpeed = 1.0f;
+    public float Acceleration = .01f;
 
     [Header("Refereces")]
     public GameObject FireflyPrefab;
@@ -20,8 +22,7 @@ public class Star : MonoBehaviour
     public bool IsActive { get; private set; }
 
     private Transform[] Objects;
-    private Vector3 InitialPos;
-    private Vector3 Velocity;
+    private Vector3 InitialVelocity;
     private float EndY;
 
 
@@ -30,15 +31,19 @@ public class Star : MonoBehaviour
         gameObject.SetActive(true);
         IsActive = true;
 
-        Velocity = (end - start).normalized * Speed;
-        EndY = end.y;
+        var dir = (end - start).normalized;
+        var lowEnd = start + dir * 10;
+        lowEnd.y = -1;
+
+        float speed = Random.Range(MinSpeed, MaxSpeed);
+        InitialVelocity = (lowEnd - start).normalized * speed;
+        EndY = lowEnd.y;
         transform.position = start;
-        transform.forward = Velocity.normalized;
+        transform.forward = InitialVelocity.normalized;
     }
 
     void Start()
     {
-        InitialPos = transform.position;
         Objects = new Transform[Amount];
         for (int i = 0; i < Amount; ++i)
         {
@@ -50,7 +55,8 @@ public class Star : MonoBehaviour
     {
         if(IsActive)
         {
-            transform.position += Velocity * Time.deltaTime;
+            Vector3 velocity = InitialVelocity + InitialVelocity.normalized * Acceleration * Time.deltaTime;
+            transform.position += velocity * Time.deltaTime;
 
             for (int i = 0; i < Objects.Length; ++i)
             {

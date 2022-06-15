@@ -4,71 +4,86 @@ using UnityEngine;
 
 public class FlyController : MonoBehaviour
 {
-    public float Radius = 3;
-    public float DefaultAngle = -90;
-    public float MaxOffset = 30;
-    public float Speed = 10;
-
-    public float MaxRadiusOffset = 1;
+    [Header("Glider")]
+    public float RollSpeed = 45;
+    public float MaxVerticalOffset = 0.05f;
     public float VerticalSpeed = 20;
+    public float DefaultPitch = -10.0f;
+    public float MaxPitch = 0.0f;
+    public float MinPitch = -20.0f;
+    public float TargetRoll = 30.0f;
 
-    private float DefaultRotZ = 10;
+    [Header("Camera")]
+    public Transform Camera;
+    public float CameraMovementSpeed = 0.2f;
+    public float CameraRotationSpeed = 1.0f;
+    public float MaxCameraRotationSpeed = 0.1f;
+    public float CameraRotationSpeedDamping = 0.25f;
+    public Transform Cube;
 
-    private float AngleOffset;
     private Vector3 InitialPos;
     private float RadiusOffset;
+    private float CurremtCameraRotSpeed;
 
     private void Start()
     {
-        InitialPos = transform.position;
+        InitialPos = transform.localPosition;
     }
 
     void Update()
     {
-        float targetZRot = DefaultRotZ;
-        float prevRadiusOffset = RadiusOffset;
+        float targetRoll = 0;
+        float targetPitch = DefaultPitch;
 
-        if(Input.GetKey(KeyCode.A))
+        Vector3 dist = Camera.transform.forward * Time.deltaTime * CameraMovementSpeed;
+        Camera.transform.position += dist;
+        Cube.transform.position += dist;
+
+        if (Input.GetKey(KeyCode.A))
         {
-            AngleOffset -= Time.deltaTime * Speed;
+            targetRoll = TargetRoll;
+
+            CurremtCameraRotSpeed -= Time.deltaTime * CameraRotationSpeed;
         }
         else if(Input.GetKey(KeyCode.D))
         {
-            AngleOffset += Time.deltaTime * Speed;
+            targetRoll = -TargetRoll;
+
+            CurremtCameraRotSpeed += Time.deltaTime * CameraRotationSpeed;
         }
-        if( Input.GetKey(KeyCode.W))
+        else
+        {
+            CurremtCameraRotSpeed += CurremtCameraRotSpeed > 0 ? -(Time.deltaTime * CameraRotationSpeedDamping) : Time.deltaTime * CameraRotationSpeedDamping;  
+        }
+
+        CurremtCameraRotSpeed = Mathf.Clamp(CurremtCameraRotSpeed, -MaxCameraRotationSpeed, MaxCameraRotationSpeed);
+        Camera.transform.Rotate(Vector3.up, CurremtCameraRotSpeed);
+
+        if ( Input.GetKey(KeyCode.W))
         {
             RadiusOffset += Time.deltaTime * VerticalSpeed;
-            targetZRot = 0;
+            targetPitch = MaxPitch;
         }
         else if (Input.GetKey(KeyCode.S))
         {
             RadiusOffset -= Time.deltaTime * VerticalSpeed;
-            targetZRot = 20;
+            targetPitch = MinPitch;
         }
 
-        AngleOffset = Mathf.Clamp(AngleOffset, -MaxOffset, MaxOffset);
-        float angle = DefaultAngle + AngleOffset;
 
-        RadiusOffset = Mathf.Clamp(RadiusOffset, -MaxRadiusOffset, MaxRadiusOffset);
-        float radDiff = Mathf.Abs(Mathf.Abs(RadiusOffset) - MaxRadiusOffset);
-        print(radDiff);
+        RadiusOffset = Mathf.Clamp(RadiusOffset, -MaxVerticalOffset, MaxVerticalOffset);
+        float radDiff = Mathf.Abs(Mathf.Abs(RadiusOffset) - MaxVerticalOffset);
         if (radDiff < 0.001)
         {
-            targetZRot = DefaultRotZ;
+            targetPitch = DefaultPitch;
         }
 
-        float radius = Radius + RadiusOffset;
-
-        float x = radius * Mathf.Cos(Mathf.Deg2Rad * angle);
-        float y = radius * Mathf.Sin(Mathf.Deg2Rad * angle);
-        transform.position = InitialPos + new Vector3(x, y, 0);
+        transform.localPosition = InitialPos - Vector3.up * RadiusOffset;
 
         Vector3 rot = transform.eulerAngles;
-        rot.x = AngleOffset;
-        rot.z = targetZRot;
-        transform.rotation = Quaternion.RotateTowards(transform.rotation,
-            Quaternion.Euler(rot), Time.deltaTime * Speed);
-        //transform.eulerAngles = rot;
+        rot.x = targetPitch;
+        rot.z = targetRoll;
+
+        transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.Euler(rot), Time.deltaTime * RollSpeed);
     }
 }

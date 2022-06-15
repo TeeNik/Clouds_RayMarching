@@ -18,6 +18,7 @@ public class Balloon : MonoBehaviour
 
     public void StartFlight(Transform player)
     {
+        gameObject.SetActive(true);
         IsActive = true;
         Speed = Random.Range(MinSpeed, MaxSpeed);
 
@@ -39,7 +40,8 @@ public class Balloon : MonoBehaviour
             transform.position += Vector3.up * Speed * Time.deltaTime;
             if(transform.position.y > MaxBound.y)
             {
-                IsActive=false;
+                IsActive = false;
+                gameObject.SetActive(false);
             }
         }
     }
