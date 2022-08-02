@@ -23,7 +23,12 @@ public class FlyController : MonoBehaviour
 
     private Vector3 InitialPos;
     private float RadiusOffset;
-    private float CurremtCameraRotSpeed;
+    private float CurrentCameraRotSpeed;
+
+    private float RollValue = 0.0f;
+
+    public float MinDelayAfterPress = 1.5f;
+    private float DelayAfterPress = 0;
 
     private void Start()
     {
@@ -43,21 +48,29 @@ public class FlyController : MonoBehaviour
         {
             targetRoll = TargetRoll;
 
-            CurremtCameraRotSpeed -= Time.deltaTime * CameraRotationSpeed;
+            CurrentCameraRotSpeed -= Time.deltaTime * CameraRotationSpeed;
+            RollValue += Time.deltaTime * RollSpeed;
+            DelayAfterPress = MinDelayAfterPress;
         }
         else if(Input.GetKey(KeyCode.D))
         {
             targetRoll = -TargetRoll;
 
-            CurremtCameraRotSpeed += Time.deltaTime * CameraRotationSpeed;
+            CurrentCameraRotSpeed += Time.deltaTime * CameraRotationSpeed;
+            RollValue -= Time.deltaTime * RollSpeed;
+            DelayAfterPress = MinDelayAfterPress;
         }
         else
         {
-            CurremtCameraRotSpeed += CurremtCameraRotSpeed > 0 ? -(Time.deltaTime * CameraRotationSpeedDamping) : Time.deltaTime * CameraRotationSpeedDamping;  
+            CurrentCameraRotSpeed += CurrentCameraRotSpeed > 0 ? -(Time.deltaTime * CameraRotationSpeedDamping) : Time.deltaTime * CameraRotationSpeedDamping;
+            RollValue = RollValue > 0 ? RollValue - Time.deltaTime : RollValue + Time.deltaTime;
+            //RollValue -= Time.deltaTime;
         }
 
-        CurremtCameraRotSpeed = Mathf.Clamp(CurremtCameraRotSpeed, -MaxCameraRotationSpeed, MaxCameraRotationSpeed);
-        Camera.transform.Rotate(Vector3.up, CurremtCameraRotSpeed);
+        RollValue = Mathf.Clamp(RollValue, -1.0f, 1.0f);
+        print(RollValue);
+        CurrentCameraRotSpeed = Mathf.Clamp(CurrentCameraRotSpeed, -MaxCameraRotationSpeed, MaxCameraRotationSpeed);
+        Camera.transform.Rotate(Vector3.up, CurrentCameraRotSpeed);
 
         if ( Input.GetKey(KeyCode.W))
         {
@@ -83,7 +96,10 @@ public class FlyController : MonoBehaviour
         Vector3 rot = transform.eulerAngles;
         rot.x = targetPitch;
         rot.z = targetRoll;
+        rot.z = TargetRoll * RollValue;
 
-        transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.Euler(rot), Time.deltaTime * RollSpeed);
+        transform.rotation = Quaternion.Euler(rot);
+
+        //transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.Euler(rot), Time.deltaTime * RollSpeed);
     }
 }
