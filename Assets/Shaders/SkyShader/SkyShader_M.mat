@@ -37,13 +37,13 @@ Material:
     - _NoiseRotSpeed: 0
     - _Power: 1.18
     - _StarsAmount: 2
-    - _StarsIntensity: -0.00021259174
+    - _StarsIntensity: 0.45558333
     - _StarsSize: 100
     m_Colors:
-    - _BottomColor: {r: 0.7720648, g: 0.7782681, b: 0.83045167, a: 1}
+    - _BottomColor: {r: 0.5702928, g: 0.19087654, b: 0.29643512, a: 1}
     - _Color: {r: 0, g: 0.17089081, b: 1, a: 1}
     - _GlitterColor: {r: 1, g: 0.75275195, b: 0, a: 1}
     - _NoiseScale: {r: 1, g: 1, b: 1, a: 1}
     - _Tilling: {r: 20, g: 20, b: 20, a: 1}
-    - _TopColor: {r: 0.31836605, g: 0.46255797, b: 0.85913163, a: 1}
+    - _TopColor: {r: 0.06756051, g: 0.1324186, b: 0.17565732, a: 1}
   m_BuildTextureStacks: []
